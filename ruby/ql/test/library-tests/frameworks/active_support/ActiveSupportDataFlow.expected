@@ -1,4 +1,6 @@
 failures
+| active_support.rb:219:8:219:15 | call to name | Unexpected result: hasValueFlow=a |
+| active_support.rb:220:8:220:19 | call to username | Unexpected result: hasValueFlow=a |
 edges
 | active_support.rb:9:9:9:18 | call to source :  | active_support.rb:10:10:10:10 | x :  |
 | active_support.rb:10:10:10:10 | x :  | active_support.rb:10:10:10:19 | call to camelize |
@@ -144,6 +146,36 @@ edges
 | active_support.rb:199:7:199:17 | call to existence :  | active_support.rb:201:7:201:7 | y :  |
 | active_support.rb:201:7:201:7 | y :  | active_support.rb:201:7:201:17 | call to existence :  |
 | active_support.rb:201:7:201:17 | call to existence :  | active_support.rb:202:8:202:8 | z |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:214:8:214:10 | foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:214:8:214:10 | foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:215:8:215:10 | foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:215:8:215:10 | foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:219:8:219:10 | foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:219:8:219:10 | foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:220:8:220:10 | foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | active_support.rb:220:8:220:10 | foo [@name] :  |
+| active_support.rb:212:14:212:23 | call to source :  | active_support.rb:212:3:212:5 | [post] foo [@name] :  |
+| active_support.rb:212:14:212:23 | call to source :  | active_support.rb:212:3:212:5 | [post] foo [@name] :  |
+| active_support.rb:214:8:214:10 | foo [@name] :  | active_support.rb:214:8:214:15 | call to name |
+| active_support.rb:214:8:214:10 | foo [@name] :  | active_support.rb:214:8:214:15 | call to name |
+| active_support.rb:215:8:215:10 | foo [@name] :  | active_support.rb:215:8:215:19 | call to username |
+| active_support.rb:215:8:215:10 | foo [@name] :  | active_support.rb:215:8:215:19 | call to username |
+| active_support.rb:217:3:217:5 | [post] foo [@name] :  | active_support.rb:219:8:219:10 | foo [@name] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@name] :  | active_support.rb:219:8:219:10 | foo [@name] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@name] :  | active_support.rb:220:8:220:10 | foo [@name] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@name] :  | active_support.rb:220:8:220:10 | foo [@name] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@username] :  | active_support.rb:220:8:220:10 | foo [@username] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@username] :  | active_support.rb:220:8:220:10 | foo [@username] :  |
+| active_support.rb:217:18:217:27 | call to source :  | active_support.rb:217:3:217:5 | [post] foo [@name] :  |
+| active_support.rb:217:18:217:27 | call to source :  | active_support.rb:217:3:217:5 | [post] foo [@name] :  |
+| active_support.rb:217:18:217:27 | call to source :  | active_support.rb:217:3:217:5 | [post] foo [@username] :  |
+| active_support.rb:217:18:217:27 | call to source :  | active_support.rb:217:3:217:5 | [post] foo [@username] :  |
+| active_support.rb:219:8:219:10 | foo [@name] :  | active_support.rb:219:8:219:15 | call to name |
+| active_support.rb:219:8:219:10 | foo [@name] :  | active_support.rb:219:8:219:15 | call to name |
+| active_support.rb:220:8:220:10 | foo [@name] :  | active_support.rb:220:8:220:19 | call to username |
+| active_support.rb:220:8:220:10 | foo [@name] :  | active_support.rb:220:8:220:19 | call to username |
+| active_support.rb:220:8:220:10 | foo [@username] :  | active_support.rb:220:8:220:19 | call to username |
+| active_support.rb:220:8:220:10 | foo [@username] :  | active_support.rb:220:8:220:19 | call to username |
 nodes
 | active_support.rb:9:9:9:18 | call to source :  | semmle.label | call to source :  |
 | active_support.rb:10:10:10:10 | x :  | semmle.label | x :  |
@@ -327,6 +359,34 @@ nodes
 | active_support.rb:201:7:201:7 | y :  | semmle.label | y :  |
 | active_support.rb:201:7:201:17 | call to existence :  | semmle.label | call to existence :  |
 | active_support.rb:202:8:202:8 | z | semmle.label | z |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | semmle.label | [post] foo [@name] :  |
+| active_support.rb:212:3:212:5 | [post] foo [@name] :  | semmle.label | [post] foo [@name] :  |
+| active_support.rb:212:14:212:23 | call to source :  | semmle.label | call to source :  |
+| active_support.rb:212:14:212:23 | call to source :  | semmle.label | call to source :  |
+| active_support.rb:214:8:214:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:214:8:214:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:214:8:214:15 | call to name | semmle.label | call to name |
+| active_support.rb:214:8:214:15 | call to name | semmle.label | call to name |
+| active_support.rb:215:8:215:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:215:8:215:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:215:8:215:19 | call to username | semmle.label | call to username |
+| active_support.rb:215:8:215:19 | call to username | semmle.label | call to username |
+| active_support.rb:217:3:217:5 | [post] foo [@name] :  | semmle.label | [post] foo [@name] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@name] :  | semmle.label | [post] foo [@name] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@username] :  | semmle.label | [post] foo [@username] :  |
+| active_support.rb:217:3:217:5 | [post] foo [@username] :  | semmle.label | [post] foo [@username] :  |
+| active_support.rb:217:18:217:27 | call to source :  | semmle.label | call to source :  |
+| active_support.rb:217:18:217:27 | call to source :  | semmle.label | call to source :  |
+| active_support.rb:219:8:219:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:219:8:219:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:219:8:219:15 | call to name | semmle.label | call to name |
+| active_support.rb:219:8:219:15 | call to name | semmle.label | call to name |
+| active_support.rb:220:8:220:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:220:8:220:10 | foo [@name] :  | semmle.label | foo [@name] :  |
+| active_support.rb:220:8:220:10 | foo [@username] :  | semmle.label | foo [@username] :  |
+| active_support.rb:220:8:220:10 | foo [@username] :  | semmle.label | foo [@username] :  |
+| active_support.rb:220:8:220:19 | call to username | semmle.label | call to username |
+| active_support.rb:220:8:220:19 | call to username | semmle.label | call to username |
 subpaths
 #select
 | active_support.rb:106:10:106:13 | ...[...] | active_support.rb:104:10:104:17 | call to source :  | active_support.rb:106:10:106:13 | ...[...] | $@ | active_support.rb:104:10:104:17 | call to source :  | call to source :  |
@@ -343,3 +403,9 @@ subpaths
 | active_support.rb:134:10:134:13 | ...[...] | active_support.rb:129:32:129:40 | call to source :  | active_support.rb:134:10:134:13 | ...[...] | $@ | active_support.rb:129:32:129:40 | call to source :  | call to source :  |
 | active_support.rb:135:10:135:13 | ...[...] | active_support.rb:129:21:129:29 | call to source :  | active_support.rb:135:10:135:13 | ...[...] | $@ | active_support.rb:129:21:129:29 | call to source :  | call to source :  |
 | active_support.rb:135:10:135:13 | ...[...] | active_support.rb:129:32:129:40 | call to source :  | active_support.rb:135:10:135:13 | ...[...] | $@ | active_support.rb:129:32:129:40 | call to source :  | call to source :  |
+| active_support.rb:214:8:214:15 | call to name | active_support.rb:212:14:212:23 | call to source :  | active_support.rb:214:8:214:15 | call to name | $@ | active_support.rb:212:14:212:23 | call to source :  | call to source :  |
+| active_support.rb:215:8:215:19 | call to username | active_support.rb:212:14:212:23 | call to source :  | active_support.rb:215:8:215:19 | call to username | $@ | active_support.rb:212:14:212:23 | call to source :  | call to source :  |
+| active_support.rb:219:8:219:15 | call to name | active_support.rb:212:14:212:23 | call to source :  | active_support.rb:219:8:219:15 | call to name | $@ | active_support.rb:212:14:212:23 | call to source :  | call to source :  |
+| active_support.rb:219:8:219:15 | call to name | active_support.rb:217:18:217:27 | call to source :  | active_support.rb:219:8:219:15 | call to name | $@ | active_support.rb:217:18:217:27 | call to source :  | call to source :  |
+| active_support.rb:220:8:220:19 | call to username | active_support.rb:212:14:212:23 | call to source :  | active_support.rb:220:8:220:19 | call to username | $@ | active_support.rb:212:14:212:23 | call to source :  | call to source :  |
+| active_support.rb:220:8:220:19 | call to username | active_support.rb:217:18:217:27 | call to source :  | active_support.rb:220:8:220:19 | call to username | $@ | active_support.rb:217:18:217:27 | call to source :  | call to source :  |
