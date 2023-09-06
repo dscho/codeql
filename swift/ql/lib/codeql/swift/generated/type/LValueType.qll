@@ -7,6 +7,12 @@ module Generated {
   class LValueType extends Synth::TLValueType, Type {
     override string getAPrimaryQlClass() { result = "LValueType" }
 
+    /**
+     * Gets the object type of this l value type.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateObjectType() {
       result =
         Synth::convertTypeFromRaw(Synth::convertLValueTypeToRaw(this)
@@ -14,6 +20,14 @@ module Generated {
               .getObjectType())
     }
 
-    final Type getObjectType() { result = getImmediateObjectType().resolve() }
+    /**
+     * Gets the object type of this l value type.
+     */
+    final Type getObjectType() {
+      exists(Type immediate |
+        immediate = this.getImmediateObjectType() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
   }
 }

@@ -199,11 +199,13 @@ module Hash {
     }
   }
 
-  private class AssocUnknownSummary extends AssocSummary {
-    AssocUnknownSummary() {
-      this = "assoc" and
-      mc.getNumberOfArguments() = 1 and
-      not exists(DataFlow::Content::getKnownElementIndex(mc.getArgument(0)))
+  private class AssocUnknownSummary extends SummarizedCallable {
+    AssocUnknownSummary() { this = "assoc-unknown-arg" }
+
+    override MethodCall getACallSimple() {
+      result.getMethodName() = "assoc" and
+      result.getNumberOfArguments() = 1 and
+      not exists(DataFlow::Content::getKnownElementIndex(result.getArgument(0)))
     }
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
@@ -244,7 +246,7 @@ module Hash {
   }
 
   private string getExceptComponent(MethodCall mc, int i) {
-    mc.getMethodName() = "except" and
+    mc.getMethodName() = ["except", "except!"] and
     result = DataFlow::Content::getKnownElementIndex(mc.getArgument(i)).serialize()
   }
 
@@ -252,10 +254,12 @@ module Hash {
     MethodCall mc;
 
     ExceptSummary() {
-      mc.getMethodName() = "except" and
+      // except! is an ActiveSupport extension
+      // https://api.rubyonrails.org/classes/Hash.html#method-i-except-21
+      mc.getMethodName() = ["except", "except!"] and
       this =
-        "except(" + concat(int i, string s | s = getExceptComponent(mc, i) | s, "," order by i) +
-          ")"
+        mc.getMethodName() + "(" +
+          concat(int i, string s | s = getExceptComponent(mc, i) | s, "," order by i) + ")"
     }
 
     final override MethodCall getACallSimple() { result = mc }
@@ -268,7 +272,11 @@ module Hash {
           |
             ".WithoutElement[" + s + "!]" order by i
           ) + ".WithElement[any]" and
-      output = "ReturnValue" and
+      (
+        if mc.getMethodName() = "except!"
+        then output = ["ReturnValue", "Argument[self]"]
+        else output = "ReturnValue"
+      ) and
       preservesValue = true
     }
   }
@@ -331,7 +339,11 @@ private class FetchValuesUnknownSummary extends FetchValuesSummary {
 }
 
 private class MergeSummary extends SimpleSummarizedCallable {
-  MergeSummary() { this = "merge" }
+  MergeSummary() {
+    // deep_merge is an ActiveSupport extension
+    // https://api.rubyonrails.org/classes/Hash.html#method-i-deep_merge
+    this = ["merge", "deep_merge"]
+  }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     (
@@ -346,7 +358,11 @@ private class MergeSummary extends SimpleSummarizedCallable {
 }
 
 private class MergeBangSummary extends SimpleSummarizedCallable {
-  MergeBangSummary() { this = ["merge!", "update"] }
+  MergeBangSummary() {
+    // deep_merge! is an ActiveSupport extension
+    // https://api.rubyonrails.org/classes/Hash.html#method-i-deep_merge-21
+    this = ["merge!", "deep_merge!", "update"]
+  }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     (
@@ -460,9 +476,6 @@ private class TransformKeysBangSummary extends SimpleSummarizedCallable {
     (
       input = "Argument[self].Element[any]" and
       output = "Argument[self].Element[?]"
-      or
-      input = "Argument[self].WithoutElement[any]" and
-      output = "Argument[self]"
     ) and
     preservesValue = true
   }

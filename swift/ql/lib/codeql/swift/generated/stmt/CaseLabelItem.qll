@@ -9,6 +9,12 @@ module Generated {
   class CaseLabelItem extends Synth::TCaseLabelItem, AstNode {
     override string getAPrimaryQlClass() { result = "CaseLabelItem" }
 
+    /**
+     * Gets the pattern of this case label item.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Pattern getImmediatePattern() {
       result =
         Synth::convertPatternFromRaw(Synth::convertCaseLabelItemToRaw(this)
@@ -16,8 +22,22 @@ module Generated {
               .getPattern())
     }
 
-    final Pattern getPattern() { result = getImmediatePattern().resolve() }
+    /**
+     * Gets the pattern of this case label item.
+     */
+    final Pattern getPattern() {
+      exists(Pattern immediate |
+        immediate = this.getImmediatePattern() and
+        result = immediate.resolve()
+      )
+    }
 
+    /**
+     * Gets the guard of this case label item, if it exists.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateGuard() {
       result =
         Synth::convertExprFromRaw(Synth::convertCaseLabelItemToRaw(this)
@@ -25,8 +45,19 @@ module Generated {
               .getGuard())
     }
 
-    final Expr getGuard() { result = getImmediateGuard().resolve() }
+    /**
+     * Gets the guard of this case label item, if it exists.
+     */
+    final Expr getGuard() {
+      exists(Expr immediate |
+        immediate = this.getImmediateGuard() and
+        result = immediate.resolve()
+      )
+    }
 
-    final predicate hasGuard() { exists(getGuard()) }
+    /**
+     * Holds if `getGuard()` exists.
+     */
+    final predicate hasGuard() { exists(this.getGuard()) }
   }
 }

@@ -2,42 +2,92 @@
 private import codeql.swift.generated.Synth
 private import codeql.swift.generated.Raw
 import codeql.swift.elements.stmt.BraceStmt
+import codeql.swift.elements.decl.CapturedDecl
 import codeql.swift.elements.Element
 import codeql.swift.elements.decl.ParamDecl
 
 module Generated {
   class Callable extends Synth::TCallable, Element {
-    ParamDecl getImmediateSelfParam() {
+    /**
+     * Gets the name of this callable, if it exists.
+     *
+     * The name includes argument labels of the callable, for example `myFunction(arg:)`.
+     */
+    string getName() { result = Synth::convertCallableToRaw(this).(Raw::Callable).getName() }
+
+    /**
+     * Holds if `getName()` exists.
+     */
+    final predicate hasName() { exists(this.getName()) }
+
+    /**
+     * Gets the self parameter of this callable, if it exists.
+     */
+    ParamDecl getSelfParam() {
       result =
         Synth::convertParamDeclFromRaw(Synth::convertCallableToRaw(this)
               .(Raw::Callable)
               .getSelfParam())
     }
 
-    final ParamDecl getSelfParam() { result = getImmediateSelfParam().resolve() }
+    /**
+     * Holds if `getSelfParam()` exists.
+     */
+    final predicate hasSelfParam() { exists(this.getSelfParam()) }
 
-    final predicate hasSelfParam() { exists(getSelfParam()) }
-
-    ParamDecl getImmediateParam(int index) {
+    /**
+     * Gets the `index`th parameter of this callable (0-based).
+     */
+    ParamDecl getParam(int index) {
       result =
         Synth::convertParamDeclFromRaw(Synth::convertCallableToRaw(this)
               .(Raw::Callable)
               .getParam(index))
     }
 
-    final ParamDecl getParam(int index) { result = getImmediateParam(index).resolve() }
+    /**
+     * Gets any of the parameters of this callable.
+     */
+    final ParamDecl getAParam() { result = this.getParam(_) }
 
-    final ParamDecl getAParam() { result = getParam(_) }
+    /**
+     * Gets the number of parameters of this callable.
+     */
+    final int getNumberOfParams() { result = count(int i | exists(this.getParam(i))) }
 
-    final int getNumberOfParams() { result = count(getAParam()) }
-
-    BraceStmt getImmediateBody() {
+    /**
+     * Gets the body of this callable, if it exists.
+     *
+     * The body is absent within protocol declarations.
+     */
+    BraceStmt getBody() {
       result =
         Synth::convertBraceStmtFromRaw(Synth::convertCallableToRaw(this).(Raw::Callable).getBody())
     }
 
-    final BraceStmt getBody() { result = getImmediateBody().resolve() }
+    /**
+     * Holds if `getBody()` exists.
+     */
+    final predicate hasBody() { exists(this.getBody()) }
 
-    final predicate hasBody() { exists(getBody()) }
+    /**
+     * Gets the `index`th capture of this callable (0-based).
+     */
+    CapturedDecl getCapture(int index) {
+      result =
+        Synth::convertCapturedDeclFromRaw(Synth::convertCallableToRaw(this)
+              .(Raw::Callable)
+              .getCapture(index))
+    }
+
+    /**
+     * Gets any of the captures of this callable.
+     */
+    final CapturedDecl getACapture() { result = this.getCapture(_) }
+
+    /**
+     * Gets the number of captures of this callable.
+     */
+    final int getNumberOfCaptures() { result = count(int i | exists(this.getCapture(i))) }
   }
 }

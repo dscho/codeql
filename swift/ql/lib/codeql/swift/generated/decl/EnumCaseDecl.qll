@@ -8,17 +8,24 @@ module Generated {
   class EnumCaseDecl extends Synth::TEnumCaseDecl, Decl {
     override string getAPrimaryQlClass() { result = "EnumCaseDecl" }
 
-    EnumElementDecl getImmediateElement(int index) {
+    /**
+     * Gets the `index`th element of this enum case declaration (0-based).
+     */
+    EnumElementDecl getElement(int index) {
       result =
         Synth::convertEnumElementDeclFromRaw(Synth::convertEnumCaseDeclToRaw(this)
               .(Raw::EnumCaseDecl)
               .getElement(index))
     }
 
-    final EnumElementDecl getElement(int index) { result = getImmediateElement(index).resolve() }
+    /**
+     * Gets any of the elements of this enum case declaration.
+     */
+    final EnumElementDecl getAnElement() { result = this.getElement(_) }
 
-    final EnumElementDecl getAnElement() { result = getElement(_) }
-
-    final int getNumberOfElements() { result = count(getAnElement()) }
+    /**
+     * Gets the number of elements of this enum case declaration.
+     */
+    final int getNumberOfElements() { result = count(int i | exists(this.getElement(i))) }
   }
 }

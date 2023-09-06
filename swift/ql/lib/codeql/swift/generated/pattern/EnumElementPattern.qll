@@ -8,15 +8,22 @@ module Generated {
   class EnumElementPattern extends Synth::TEnumElementPattern, Pattern {
     override string getAPrimaryQlClass() { result = "EnumElementPattern" }
 
-    EnumElementDecl getImmediateElement() {
+    /**
+     * Gets the element of this enum element pattern.
+     */
+    EnumElementDecl getElement() {
       result =
         Synth::convertEnumElementDeclFromRaw(Synth::convertEnumElementPatternToRaw(this)
               .(Raw::EnumElementPattern)
               .getElement())
     }
 
-    final EnumElementDecl getElement() { result = getImmediateElement().resolve() }
-
+    /**
+     * Gets the sub pattern of this enum element pattern, if it exists.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Pattern getImmediateSubPattern() {
       result =
         Synth::convertPatternFromRaw(Synth::convertEnumElementPatternToRaw(this)
@@ -24,8 +31,19 @@ module Generated {
               .getSubPattern())
     }
 
-    final Pattern getSubPattern() { result = getImmediateSubPattern().resolve() }
+    /**
+     * Gets the sub pattern of this enum element pattern, if it exists.
+     */
+    final Pattern getSubPattern() {
+      exists(Pattern immediate |
+        immediate = this.getImmediateSubPattern() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final predicate hasSubPattern() { exists(getSubPattern()) }
+    /**
+     * Holds if `getSubPattern()` exists.
+     */
+    final predicate hasSubPattern() { exists(this.getSubPattern()) }
   }
 }

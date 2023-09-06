@@ -7,19 +7,29 @@ module Generated {
   class BreakStmt extends Synth::TBreakStmt, Stmt {
     override string getAPrimaryQlClass() { result = "BreakStmt" }
 
+    /**
+     * Gets the target name of this break statement, if it exists.
+     */
     string getTargetName() {
       result = Synth::convertBreakStmtToRaw(this).(Raw::BreakStmt).getTargetName()
     }
 
-    final predicate hasTargetName() { exists(getTargetName()) }
+    /**
+     * Holds if `getTargetName()` exists.
+     */
+    final predicate hasTargetName() { exists(this.getTargetName()) }
 
-    Stmt getImmediateTarget() {
+    /**
+     * Gets the target of this break statement, if it exists.
+     */
+    Stmt getTarget() {
       result =
         Synth::convertStmtFromRaw(Synth::convertBreakStmtToRaw(this).(Raw::BreakStmt).getTarget())
     }
 
-    final Stmt getTarget() { result = getImmediateTarget().resolve() }
-
-    final predicate hasTarget() { exists(getTarget()) }
+    /**
+     * Holds if `getTarget()` exists.
+     */
+    final predicate hasTarget() { exists(this.getTarget()) }
   }
 }

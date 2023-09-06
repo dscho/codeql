@@ -3,8 +3,8 @@ package com.github.codeql.comments
 import com.github.codeql.*
 import com.github.codeql.utils.IrVisitorLookup
 import com.github.codeql.utils.isLocalFunction
+import com.github.codeql.utils.Psi2IrFacade
 import com.github.codeql.utils.versions.getPsi2Ir
-import com.github.codeql.utils.versions.Psi2IrFacade
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
@@ -25,7 +25,7 @@ class CommentExtractor(private val fileExtractor: KotlinFileExtractor, private v
     private val logger = fileExtractor.logger
 
     fun extract() {
-        val psi2Ir = getPsi2Ir(logger)
+        val psi2Ir = getPsi2Ir()
         if (psi2Ir == null) {
             logger.warn("Comments will not be extracted as Kotlin version is too old (${KotlinCompilerVersion.getVersion()})")
             return

@@ -140,16 +140,21 @@ module Array {
     }
   }
 
-  private class SetDifferenceSummary extends SummarizedCallable {
-    SetDifferenceSummary() { this = "-" }
-
-    override SubExpr getACallSimple() { any() }
+  abstract private class DifferenceSummaryShared extends SummarizedCallable {
+    bindingset[this]
+    DifferenceSummaryShared() { any() }
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
       input = "Argument[self].Element[any]" and
       output = "ReturnValue.Element[?]" and
       preservesValue = true
     }
+  }
+
+  private class SetDifferenceSummary extends DifferenceSummaryShared {
+    SetDifferenceSummary() { this = "-" }
+
+    override SubExpr getACallSimple() { any() }
   }
 
   /** Flow summary for `Array#<<`. For `Array#append`, see `PushSummary`. */
@@ -578,7 +583,8 @@ module Array {
 
   private class DeleteUnknownSummary extends DeleteSummary {
     DeleteUnknownSummary() {
-      this = "delete" and
+      // Note: take care to avoid a name clash with the "delete" summary from String.qll
+      this = "delete-unknown-key" and
       not exists(DataFlow::Content::getKnownElementIndex(mc.getArgument(0)))
     }
 
@@ -687,14 +693,8 @@ module Array {
     }
   }
 
-  private class DifferenceSummary extends SimpleSummarizedCallable {
+  private class DifferenceSummary extends DifferenceSummaryShared, SimpleSummarizedCallable {
     DifferenceSummary() { this = "difference" }
-
-    override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
-      // `Array#difference` and `Array#-` do not behave exactly the same way,
-      // but we model their flow the same way.
-      any(SetDifferenceSummary s).propagatesFlowExt(input, output, preservesValue)
-    }
   }
 
   private string getDigArg(MethodCall dig, int i) {
@@ -1184,6 +1184,16 @@ module Array {
       ) and
       output = "ReturnValue.Element[?].Element[?]" and
       preservesValue = true
+    }
+  }
+
+  private class JoinSummary extends SimpleSummarizedCallable {
+    JoinSummary() { this = ["join"] }
+
+    override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+      input = "Argument[self].Element[any]" and
+      output = "ReturnValue" and
+      preservesValue = false
     }
   }
 
@@ -2057,7 +2067,11 @@ module Enumerable {
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
       input = "Argument[self].Element[any]" and
-      output = ["Argument[block].Parameter[0]", "ReturnValue.Element[?]"] and
+      output = "Argument[block].Parameter[0]" and
+      preservesValue = true
+      or
+      input = "Argument[block].ReturnValue" and
+      output = "ReturnValue.Element[?]" and
       preservesValue = true
     }
   }

@@ -4,6 +4,7 @@ private import TaintTrackingPublic
 private import codeql.ruby.CFG
 private import codeql.ruby.DataFlow
 private import FlowSummaryImpl as FlowSummaryImpl
+private import codeql.ruby.dataflow.SSA
 
 /**
  * Holds if `node` should be a sanitizer in all global taint flow configurations
@@ -62,6 +63,8 @@ private CfgNodes::ExprNodes::VariableWriteAccessCfgNode variablesInPattern(
 
 cached
 private module Cached {
+  private import codeql.ruby.dataflow.FlowSteps as FlowSteps
+
   cached
   predicate forceCachingInSameStage() { any() }
 
@@ -75,7 +78,7 @@ private module Cached {
     exists(CfgNodes::ExprNodes::CaseExprCfgNode case, CfgNodes::ExprNodes::InClauseCfgNode clause |
       nodeFrom.asExpr() = case.getValue() and
       clause = case.getBranch(_) and
-      nodeTo.(SsaDefinitionNode).getDefinition().getControlFlowNode() =
+      nodeTo.(SsaDefinitionExtNode).getDefinitionExt().(Ssa::Definition).getControlFlowNode() =
         variablesInPattern(clause.getPattern())
     )
     or
@@ -93,11 +96,10 @@ private module Cached {
         )
     )
     or
-    // string interpolation of `nodeFrom` into `nodeTo`
-    nodeFrom.asExpr() =
-      nodeTo.asExpr().(CfgNodes::ExprNodes::StringlikeLiteralCfgNode).getAComponent()
+    FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom.(FlowSummaryNode).getSummaryNode(),
+      nodeTo.(FlowSummaryNode).getSummaryNode(), false)
     or
-    FlowSummaryImpl::Private::Steps::summaryLocalStep(nodeFrom, nodeTo, false)
+    any(FlowSteps::AdditionalTaintStep s).step(nodeFrom, nodeTo)
     or
     // Although flow through collections is modeled precisely using stores/reads, we still
     // allow flow out of a _tainted_ collection. This is needed in order to support taint-
@@ -105,8 +107,17 @@ private module Cached {
     exists(DataFlow::ContentSet c | readStep(nodeFrom, c, nodeTo) |
       c.isSingleton(any(DataFlow::Content::ElementContent ec))
       or
+      c.isKnownOrUnknownElement(_)
+      or
       c.isAnyElement()
     )
+  }
+
+  cached
+  predicate summaryThroughStepTaint(
+    DataFlow::Node arg, DataFlow::Node out, FlowSummaryImpl::Public::SummarizedCallable sc
+  ) {
+    FlowSummaryImpl::Private::Steps::summaryThroughStepTaint(arg, out, sc)
   }
 
   /**
@@ -115,11 +126,11 @@ private module Cached {
    */
   cached
   predicate localTaintStepCached(DataFlow::Node nodeFrom, DataFlow::Node nodeTo) {
-    defaultAdditionalTaintStep(nodeFrom, nodeTo)
-    or
+    DataFlow::localFlowStep(nodeFrom, nodeTo) or
+    defaultAdditionalTaintStep(nodeFrom, nodeTo) or
     // Simple flow through library code is included in the exposed local
     // step relation, even though flow is technically inter-procedural
-    FlowSummaryImpl::Private::Steps::summaryThroughStepTaint(nodeFrom, nodeTo, _)
+    summaryThroughStepTaint(nodeFrom, nodeTo, _)
   }
 }
 

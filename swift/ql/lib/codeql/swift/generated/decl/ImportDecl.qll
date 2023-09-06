@@ -9,30 +9,44 @@ module Generated {
   class ImportDecl extends Synth::TImportDecl, Decl {
     override string getAPrimaryQlClass() { result = "ImportDecl" }
 
+    /**
+     * Holds if this import declaration is exported.
+     */
     predicate isExported() { Synth::convertImportDeclToRaw(this).(Raw::ImportDecl).isExported() }
 
-    ModuleDecl getImmediateImportedModule() {
+    /**
+     * Gets the imported module of this import declaration, if it exists.
+     */
+    ModuleDecl getImportedModule() {
       result =
         Synth::convertModuleDeclFromRaw(Synth::convertImportDeclToRaw(this)
               .(Raw::ImportDecl)
               .getImportedModule())
     }
 
-    final ModuleDecl getImportedModule() { result = getImmediateImportedModule().resolve() }
+    /**
+     * Holds if `getImportedModule()` exists.
+     */
+    final predicate hasImportedModule() { exists(this.getImportedModule()) }
 
-    final predicate hasImportedModule() { exists(getImportedModule()) }
-
-    ValueDecl getImmediateDeclaration(int index) {
+    /**
+     * Gets the `index`th declaration of this import declaration (0-based).
+     */
+    ValueDecl getDeclaration(int index) {
       result =
         Synth::convertValueDeclFromRaw(Synth::convertImportDeclToRaw(this)
               .(Raw::ImportDecl)
               .getDeclaration(index))
     }
 
-    final ValueDecl getDeclaration(int index) { result = getImmediateDeclaration(index).resolve() }
+    /**
+     * Gets any of the declarations of this import declaration.
+     */
+    final ValueDecl getADeclaration() { result = this.getDeclaration(_) }
 
-    final ValueDecl getADeclaration() { result = getDeclaration(_) }
-
-    final int getNumberOfDeclarations() { result = count(getADeclaration()) }
+    /**
+     * Gets the number of declarations of this import declaration.
+     */
+    final int getNumberOfDeclarations() { result = count(int i | exists(this.getDeclaration(i))) }
   }
 }

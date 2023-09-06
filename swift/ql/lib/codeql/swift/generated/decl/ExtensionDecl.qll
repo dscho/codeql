@@ -3,22 +3,41 @@ private import codeql.swift.generated.Synth
 private import codeql.swift.generated.Raw
 import codeql.swift.elements.decl.Decl
 import codeql.swift.elements.decl.GenericContext
-import codeql.swift.elements.decl.IterableDeclContext
 import codeql.swift.elements.decl.NominalTypeDecl
+import codeql.swift.elements.decl.ProtocolDecl
 
 module Generated {
-  class ExtensionDecl extends Synth::TExtensionDecl, GenericContext, IterableDeclContext, Decl {
+  class ExtensionDecl extends Synth::TExtensionDecl, GenericContext, Decl {
     override string getAPrimaryQlClass() { result = "ExtensionDecl" }
 
-    NominalTypeDecl getImmediateExtendedTypeDecl() {
+    /**
+     * Gets the extended type declaration of this extension declaration.
+     */
+    NominalTypeDecl getExtendedTypeDecl() {
       result =
         Synth::convertNominalTypeDeclFromRaw(Synth::convertExtensionDeclToRaw(this)
               .(Raw::ExtensionDecl)
               .getExtendedTypeDecl())
     }
 
-    final NominalTypeDecl getExtendedTypeDecl() {
-      result = getImmediateExtendedTypeDecl().resolve()
+    /**
+     * Gets the `index`th protocol of this extension declaration (0-based).
+     */
+    ProtocolDecl getProtocol(int index) {
+      result =
+        Synth::convertProtocolDeclFromRaw(Synth::convertExtensionDeclToRaw(this)
+              .(Raw::ExtensionDecl)
+              .getProtocol(index))
     }
+
+    /**
+     * Gets any of the protocols of this extension declaration.
+     */
+    final ProtocolDecl getAProtocol() { result = this.getProtocol(_) }
+
+    /**
+     * Gets the number of protocols of this extension declaration.
+     */
+    final int getNumberOfProtocols() { result = count(int i | exists(this.getProtocol(i))) }
   }
 }

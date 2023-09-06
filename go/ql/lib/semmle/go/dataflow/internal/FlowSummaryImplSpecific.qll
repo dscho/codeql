@@ -3,6 +3,7 @@
  */
 
 private import go
+private import DataFlowDispatch
 private import DataFlowPrivate
 private import DataFlowUtil
 private import FlowSummaryImpl::Private
@@ -14,50 +15,29 @@ private module FlowSummaries {
   private import semmle.go.dataflow.FlowSummary as F
 }
 
-/** Holds if `i` is a valid parameter position. */
-predicate parameterPosition(int i) {
-  i = [-1 .. any(DataFlowCallable c).getType().getNumParameter()]
-}
-
-/** Gets the parameter position of the instance parameter. */
-int instanceParameterPosition() { result = -1 }
-
-/** A parameter position represented by an integer. */
-class ParameterPosition extends int {
-  ParameterPosition() { parameterPosition(this) }
-}
-
-/** An argument position represented by an integer. */
-class ArgumentPosition extends int {
-  ArgumentPosition() { parameterPosition(this) }
-}
-
-/** Holds if arguments at position `apos` match parameters at position `ppos`. */
-pragma[inline]
-predicate parameterMatch(ParameterPosition ppos, ArgumentPosition apos) { ppos = apos }
+/**
+ * A class of callables that are candidates for flow summary modeling.
+ */
+class SummarizedCallableBase = Callable;
 
 /**
- * Holds if `arg` is an argument of `call` with an argument position that matches
- * parameter position `ppos`.
+ * A class of callables that are candidates for neutral modeling.
  */
-pragma[noinline]
-predicate argumentPositionMatch(DataFlowCall call, ArgNode arg, ParameterPosition ppos) {
-  exists(ArgumentPosition apos |
-    arg.argumentOf(call, apos) and
-    parameterMatch(ppos, apos)
-  )
-}
+class NeutralCallableBase = Callable;
+
+DataFlowCallable inject(SummarizedCallable c) { result.asSummarizedCallable() = c or none() }
+
+/** Gets the parameter position of the instance parameter. */
+ArgumentPosition callbackSelfParameterPosition() { result = -1 }
 
 /** Gets the textual representation of a parameter position in the format used for flow summaries. */
-string getParameterPositionCsv(ParameterPosition pos) { result = pos.toString() }
+string getParameterPosition(ParameterPosition pos) { result = pos.toString() }
 
 /** Gets the textual representation of an argument position in the format used for flow summaries. */
-string getArgumentPositionCsv(ArgumentPosition pos) { result = pos.toString() }
-
-Node summaryNode(SummarizedCallable c, SummaryNodeState state) { result = getSummaryNode(c, state) }
+string getArgumentPosition(ArgumentPosition pos) { result = pos.toString() }
 
 /** Gets the synthesized data-flow call for `receiver`. */
-DataFlowCall summaryDataFlowCall(Node receiver) {
+DataFlowCall summaryDataFlowCall(SummaryNode receiver) {
   // We do not currently have support for callback-based library models.
   none()
 }
@@ -65,35 +45,47 @@ DataFlowCall summaryDataFlowCall(Node receiver) {
 /** Gets the type of content `c`. */
 DataFlowType getContentType(Content c) { result = c.getType() }
 
+/** Gets the type of the parameter at the given position. */
+DataFlowType getParameterType(SummarizedCallable c, ParameterPosition pos) { any() }
+
 /** Gets the return type of kind `rk` for callable `c`. */
-DataFlowType getReturnType(SummarizedCallable c, ReturnKind rk) {
-  result = c.getType().getResultType(rk.getIndex())
-}
+DataFlowType getReturnType(SummarizedCallable c, ReturnKind rk) { any() }
 
 /**
  * Gets the type of the `i`th parameter in a synthesized call that targets a
  * callback of type `t`.
  */
-DataFlowType getCallbackParameterType(DataFlowType t, int i) { none() }
+bindingset[t, pos]
+DataFlowType getCallbackParameterType(DataFlowType t, ArgumentPosition pos) { any() }
 
 /**
  * Gets the return type of kind `rk` in a synthesized call that targets a
  * callback of type `t`.
  */
-DataFlowType getCallbackReturnType(DataFlowType t, ReturnKind rk) { none() }
+DataFlowType getCallbackReturnType(DataFlowType t, ReturnKind rk) { any() }
+
+/** Gets the type of synthetic global `sg`. */
+DataFlowType getSyntheticGlobalType(SummaryComponent::SyntheticGlobal sg) { any() }
 
 /**
  * Holds if an external flow summary exists for `c` with input specification
- * `input`, output specification `output`, and kind `kind`.
+ * `input`, output specification `output`, kind `kind`, and provenance `provenance`.
  */
-predicate summaryElement(DataFlowCallable c, string input, string output, string kind) {
-  exists(
-    string namespace, string type, boolean subtypes, string name, string signature, string ext
-  |
-    summaryModel(namespace, type, subtypes, name, signature, ext, input, output, kind) and
-    c.asFunction() = interpretElement(namespace, type, subtypes, name, signature, ext).asEntity()
+predicate summaryElement(
+  SummarizedCallableBase c, string input, string output, string kind, string provenance
+) {
+  exists(string package, string type, boolean subtypes, string name, string signature, string ext |
+    summaryModel(package, type, subtypes, name, signature, ext, input, output, kind, provenance) and
+    c.asFunction() = interpretElement(package, type, subtypes, name, signature, ext).asEntity()
   )
 }
+
+/**
+ * Holds if a neutral model exists for `c` of kind `kind`
+ * and with provenance `provenance`.
+ * Note. Neutral models have not been implemented for Go.
+ */
+predicate neutralElement(NeutralCallableBase c, string kind, string provenance) { none() }
 
 /** Gets the summary component for specification component `c`, if any. */
 bindingset[c]
@@ -104,7 +96,7 @@ SummaryComponent interpretComponentSpecific(string c) {
 }
 
 /** Gets the summary component for specification component `c`, if any. */
-private string getContentSpecificCsv(Content c) {
+private string getContentSpecific(Content c) {
   exists(Field f, string package, string className, string fieldName |
     f = c.(FieldContent).getField() and
     f.hasQualifiedName(package, className, fieldName) and
@@ -122,16 +114,18 @@ private string getContentSpecificCsv(Content c) {
   c instanceof MapKeyContent and result = "MapKey"
   or
   c instanceof MapValueContent and result = "MapValue"
+  or
+  c instanceof PointerContent and result = "Dereference"
 }
 
-/** Gets the textual representation of the content in the format used for flow summaries. */
-string getComponentSpecificCsv(SummaryComponent sc) {
-  exists(Content c | sc = TContentSummaryComponent(c) and result = getContentSpecificCsv(c))
+/** Gets the textual representation of the content in the format used for MaD models. */
+string getMadRepresentationSpecific(SummaryComponent sc) {
+  exists(Content c | sc = TContentSummaryComponent(c) and result = getContentSpecific(c))
   or
-  exists(ReturnKind rk, int n | n = rk.getIndex() |
+  exists(ReturnKind rk |
     sc = TReturnSummaryComponent(rk) and
-    result = "ReturnValue[" + n + "]" and
-    n != 0
+    not rk = getReturnValueKind() and
+    result = "ReturnValue[" + rk.getIndex() + "]"
   )
 }
 
@@ -166,27 +160,23 @@ class SourceOrSinkElement extends TSourceOrSinkElement {
 
 /**
  * Holds if an external source specification exists for `e` with output specification
- * `output` and kind `kind`.
+ * `output`, kind `kind`, and provenance `provenance`.
  */
-predicate sourceElement(SourceOrSinkElement e, string output, string kind) {
-  exists(
-    string namespace, string type, boolean subtypes, string name, string signature, string ext
-  |
-    sourceModel(namespace, type, subtypes, name, signature, ext, output, kind) and
-    e = interpretElement(namespace, type, subtypes, name, signature, ext)
+predicate sourceElement(SourceOrSinkElement e, string output, string kind, string provenance) {
+  exists(string package, string type, boolean subtypes, string name, string signature, string ext |
+    sourceModel(package, type, subtypes, name, signature, ext, output, kind, provenance) and
+    e = interpretElement(package, type, subtypes, name, signature, ext)
   )
 }
 
 /**
  * Holds if an external sink specification exists for `e` with input specification
- * `input` and kind `kind`.
+ * `input`, kind `kind` and provenance `provenance`.
  */
-predicate sinkElement(SourceOrSinkElement e, string input, string kind) {
-  exists(
-    string namespace, string type, boolean subtypes, string name, string signature, string ext
-  |
-    sinkModel(namespace, type, subtypes, name, signature, ext, input, kind) and
-    e = interpretElement(namespace, type, subtypes, name, signature, ext)
+predicate sinkElement(SourceOrSinkElement e, string input, string kind, string provenance) {
+  exists(string package, string type, boolean subtypes, string name, string signature, string ext |
+    sinkModel(package, type, subtypes, name, signature, ext, input, kind, provenance) and
+    e = interpretElement(package, type, subtypes, name, signature, ext)
   )
 }
 
@@ -210,9 +200,7 @@ class InterpretNode extends TInterpretNode {
 
   /** Gets the callable that this node corresponds to, if any. */
   DataFlowCallable asCallable() {
-    result.asFunction() = this.asElement().asEntity()
-    or
-    result.asFuncLit() = this.asElement().asAstNode()
+    result.asSummarizedCallable().asFunction() = this.asElement().asEntity()
   }
 
   /** Gets the target of this call, if any. */
@@ -271,7 +259,10 @@ predicate interpretInputSpecific(string c, InterpretNode mid, InterpretNode n) {
   )
 }
 
-/** Holds if specification component `c` parses as return value `n`. */
+/**
+ * Holds if specification component `c` parses as return value `n` or a range
+ * containing `n`.
+ */
 predicate parseReturn(AccessPathToken c, int n) {
   (
     c = "ReturnValue" and n = 0
@@ -292,8 +283,10 @@ private int parseConstantOrRange(string arg) {
   )
 }
 
+/** Gets the argument position obtained by parsing `X` in `Parameter[X]`. */
 bindingset[arg]
 ArgumentPosition parseParamBody(string arg) { result = parseConstantOrRange(arg) }
 
+/** Gets the parameter position obtained by parsing `X` in `Argument[X]`. */
 bindingset[arg]
 ParameterPosition parseArgBody(string arg) { result = parseConstantOrRange(arg) }

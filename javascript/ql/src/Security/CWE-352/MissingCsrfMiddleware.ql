@@ -57,7 +57,7 @@ predicate hasCookieMiddleware(Routing::Node route, Http::CookieMiddlewareInstanc
  */
 DataFlow::SourceNode csrfMiddlewareCreation() {
   exists(DataFlow::SourceNode callee | result = callee.getACall() |
-    callee = DataFlow::moduleImport("csurf")
+    callee = DataFlow::moduleImport(["csurf", "tiny-csrf"])
     or
     callee = DataFlow::moduleImport("lusca") and
     exists(result.(DataFlow::CallNode).getOptionArgument(0, "csrf"))
@@ -201,5 +201,5 @@ where
   not handler.getAChild*() = Routing::getNode(authMiddlewareImmuneToCsrf()) and
   // Only warn for dangerous handlers, such as for POST and PUT.
   setup.getOwnHttpMethod().isUnsafe()
-select cookie, "This cookie middleware is serving a request handler $@ without CSRF protection.",
-  setupArg, "here"
+select cookie, "This cookie middleware is serving a $@ without CSRF protection.", setupArg,
+  "request handler"

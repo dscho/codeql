@@ -8,22 +8,24 @@ module Generated {
   class FallthroughStmt extends Synth::TFallthroughStmt, Stmt {
     override string getAPrimaryQlClass() { result = "FallthroughStmt" }
 
-    CaseStmt getImmediateFallthroughSource() {
+    /**
+     * Gets the fallthrough source of this fallthrough statement.
+     */
+    CaseStmt getFallthroughSource() {
       result =
         Synth::convertCaseStmtFromRaw(Synth::convertFallthroughStmtToRaw(this)
               .(Raw::FallthroughStmt)
               .getFallthroughSource())
     }
 
-    final CaseStmt getFallthroughSource() { result = getImmediateFallthroughSource().resolve() }
-
-    CaseStmt getImmediateFallthroughDest() {
+    /**
+     * Gets the fallthrough dest of this fallthrough statement.
+     */
+    CaseStmt getFallthroughDest() {
       result =
         Synth::convertCaseStmtFromRaw(Synth::convertFallthroughStmtToRaw(this)
               .(Raw::FallthroughStmt)
               .getFallthroughDest())
     }
-
-    final CaseStmt getFallthroughDest() { result = getImmediateFallthroughDest().resolve() }
   }
 }

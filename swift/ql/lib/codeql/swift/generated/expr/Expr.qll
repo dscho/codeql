@@ -5,13 +5,33 @@ import codeql.swift.elements.AstNode
 import codeql.swift.elements.type.Type
 
 module Generated {
+  /**
+   * The base class for all expressions in Swift.
+   */
   class Expr extends Synth::TExpr, AstNode {
+    /**
+     * Gets the type of this expression, if it exists.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateType() {
       result = Synth::convertTypeFromRaw(Synth::convertExprToRaw(this).(Raw::Expr).getType())
     }
 
-    final Type getType() { result = getImmediateType().resolve() }
+    /**
+     * Gets the type of this expression, if it exists.
+     */
+    final Type getType() {
+      exists(Type immediate |
+        immediate = this.getImmediateType() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final predicate hasType() { exists(getType()) }
+    /**
+     * Holds if `getType()` exists.
+     */
+    final predicate hasType() { exists(this.getType()) }
   }
 }

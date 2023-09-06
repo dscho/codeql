@@ -170,6 +170,24 @@ module ConstantValue {
 
   /** A constant `nil` value. */
   class ConstantNilValue extends ConstantValue, TNil { }
+
+  /** Gets the integer constant `x`. */
+  ConstantValue fromInt(int x) { result.getInt() = x }
+
+  /** Gets the float constant `x`. */
+  ConstantValue fromFloat(float x) { result.getFloat() = x }
+
+  /** Gets the string constant `x`. */
+  ConstantValue fromString(string x) { result.getString() = x }
+
+  /** Gets the symbol constant `x`. */
+  ConstantValue fromSymbol(string x) { result.getSymbol() = x }
+
+  /** Gets the regexp constant `x`. */
+  ConstantValue fromRegExp(string x) { result.getRegExp() = x }
+
+  /** Gets the string, symbol, or regexp constant `x`. */
+  ConstantValue fromStringlikeValue(string x) { result.getStringlikeValue() = x }
 }
 
 /** An access to a constant. */
@@ -215,41 +233,6 @@ class ConstantAccess extends Expr, TConstantAccess {
     or
     pred = "getScopeExpr" and result = this.getScopeExpr()
   }
-}
-
-private class TokenConstantAccess extends ConstantAccess, TTokenConstantAccess {
-  private Ruby::Constant g;
-
-  TokenConstantAccess() { this = TTokenConstantAccess(g) }
-
-  final override string getName() { result = g.getValue() }
-}
-
-private class ScopeResolutionConstantAccess extends ConstantAccess, TScopeResolutionConstantAccess {
-  private Ruby::ScopeResolution g;
-  private Ruby::Constant constant;
-
-  ScopeResolutionConstantAccess() { this = TScopeResolutionConstantAccess(g, constant) }
-
-  final override string getName() { result = constant.getValue() }
-
-  final override Expr getScopeExpr() { toGenerated(result) = g.getScope() }
-
-  final override predicate hasGlobalScope() { not exists(g.getScope()) }
-}
-
-private class ConstantReadAccessSynth extends ConstantAccess, TConstantReadAccessSynth {
-  private string value;
-
-  ConstantReadAccessSynth() { this = TConstantReadAccessSynth(_, _, value) }
-
-  final override string getName() {
-    if this.hasGlobalScope() then result = value.suffix(2) else result = value
-  }
-
-  final override Expr getScopeExpr() { synthChild(this, 0, result) }
-
-  final override predicate hasGlobalScope() { value.matches("::%") }
 }
 
 /**
@@ -323,7 +306,9 @@ class ConstantReadAccess extends ConstantAccess {
  */
 class ConstantWriteAccess extends ConstantAccess {
   ConstantWriteAccess() {
-    explicitAssignmentNode(toGenerated(this), _) or this instanceof TNamespace
+    explicitAssignmentNode(toGenerated(this), _) or
+    this instanceof TNamespace or
+    this instanceof TConstantWriteAccessSynth
   }
 
   override string getAPrimaryQlClass() { result = "ConstantWriteAccess" }
@@ -364,12 +349,6 @@ class ConstantWriteAccess extends ConstantAccess {
    * constant can be ambiguous from just statically looking at the AST.
    */
   string getAQualifiedName() { result = resolveConstantWrite(this) }
-
-  /**
-   * Gets a qualified name for this constant. Deprecated in favor of
-   * `getAQualifiedName` because this can return more than one value
-   */
-  deprecated string getQualifiedName() { result = this.getAQualifiedName() }
 }
 
 /**

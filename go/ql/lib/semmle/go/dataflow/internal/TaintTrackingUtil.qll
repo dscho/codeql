@@ -4,17 +4,21 @@
 
 private import go
 private import FlowSummaryImpl as FlowSummaryImpl
+private import codeql.util.Unit
+private import DataFlowPrivate as DataFlowPrivate
 
 /**
  * Holds if taint can flow from `src` to `sink` in zero or more
  * local (intra-procedural) steps.
  */
+pragma[inline]
 predicate localTaint(DataFlow::Node src, DataFlow::Node sink) { localTaintStep*(src, sink) }
 
 /**
  * Holds if taint can flow from `src` to `sink` in zero or more
  * local (intra-procedural) steps.
  */
+pragma[inline]
 predicate localExprTaint(Expr src, Expr sink) {
   localTaint(DataFlow::exprNode(src), DataFlow::exprNode(sink))
 }
@@ -27,7 +31,7 @@ predicate localTaintStep(DataFlow::Node src, DataFlow::Node sink) {
   localAdditionalTaintStep(src, sink) or
   // Simple flow through library code is included in the exposed local
   // step relation, even though flow is technically inter-procedural
-  FlowSummaryImpl::Private::Steps::summaryThroughStep(src, sink, false)
+  FlowSummaryImpl::Private::Steps::summaryThroughStepTaint(src, sink, _)
 }
 
 private Type getElementType(Type containerType) {
@@ -43,7 +47,7 @@ private Type getElementType(Type containerType) {
  * of `c` at sinks and inputs to additional taint steps.
  */
 bindingset[node]
-predicate defaultImplicitTaintRead(DataFlow::Node node, DataFlow::Content c) {
+predicate defaultImplicitTaintRead(DataFlow::Node node, DataFlow::ContentSet c) {
   exists(Type containerType |
     node instanceof DataFlow::ArgumentNode and
     getElementType*(node.getType()) = containerType
@@ -62,14 +66,6 @@ predicate defaultImplicitTaintRead(DataFlow::Node node, DataFlow::Content c) {
     or
     c.(DataFlow::PointerContent).getPointerType() = containerType
   )
-}
-
-private newtype TUnit = TMkUnit()
-
-/** A singleton class containing a single dummy "unit" value. */
-private class Unit extends TUnit {
-  /** Gets a textual representation of this element. */
-  string toString() { result = "unit" }
 }
 
 /**
@@ -100,7 +96,8 @@ predicate localAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
   sliceStep(pred, succ) or
   any(FunctionModel fm).taintStep(pred, succ) or
   any(AdditionalTaintStep a).step(pred, succ) or
-  FlowSummaryImpl::Private::Steps::summaryLocalStep(pred, succ, false)
+  FlowSummaryImpl::Private::Steps::summaryLocalStep(pred.(DataFlowPrivate::FlowSummaryNode)
+        .getSummaryNode(), succ.(DataFlowPrivate::FlowSummaryNode).getSummaryNode(), false)
 }
 
 /**
@@ -366,10 +363,8 @@ predicate functionEnsuresInputIsConstant(
       ri.getReturnStmt().getAnExpr() = ret.asExpr() and
       ret.asExpr() = Builtin::nil().getAReference()
     |
-      exists(DataFlow::Node exprNode |
-        DataFlow::localFlow(inp.getExitNode(fd), exprNode) and
-        mustPassConstantCaseTestToReach(ri, inp.getExitNode(fd))
-      )
+      DataFlow::localFlow(inp.getExitNode(fd), _) and
+      mustPassConstantCaseTestToReach(ri, inp.getExitNode(fd))
     )
   )
 }
@@ -411,5 +406,21 @@ private predicate listOfConstantsComparisonSanitizerGuard(DataFlow::Node g, Expr
 class ListOfConstantsComparisonSanitizerGuard extends TaintTracking::DefaultTaintSanitizer {
   ListOfConstantsComparisonSanitizerGuard() {
     this = DataFlow::BarrierGuard<listOfConstantsComparisonSanitizerGuard/3>::getABarrierNode()
+  }
+}
+
+/**
+ * The `clear` built-in function deletes or zeroes out all elements of a map or slice
+ * and therefore acts as a general sanitizer for taint flow to any uses dominated by it.
+ */
+private class ClearSanitizer extends DefaultTaintSanitizer {
+  ClearSanitizer() {
+    exists(SsaWithFields var, DataFlow::CallNode call, DataFlow::Node arg | this = var.getAUse() |
+      call = Builtin::clear().getACall() and
+      arg = call.getAnArgument() and
+      arg = var.getAUse() and
+      arg != this and
+      this.getBasicBlock().(ReachableBasicBlock).dominates(this.getBasicBlock())
+    )
   }
 }

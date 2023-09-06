@@ -8,13 +8,14 @@ module Generated {
   class TypeAliasType extends Synth::TTypeAliasType, SugarType {
     override string getAPrimaryQlClass() { result = "TypeAliasType" }
 
-    TypeAliasDecl getImmediateDecl() {
+    /**
+     * Gets the declaration of this type alias type.
+     */
+    TypeAliasDecl getDecl() {
       result =
         Synth::convertTypeAliasDeclFromRaw(Synth::convertTypeAliasTypeToRaw(this)
               .(Raw::TypeAliasType)
               .getDecl())
     }
-
-    final TypeAliasDecl getDecl() { result = getImmediateDecl().resolve() }
   }
 }

@@ -8,17 +8,27 @@ module Generated {
   class IsPattern extends Synth::TIsPattern, Pattern {
     override string getAPrimaryQlClass() { result = "IsPattern" }
 
-    TypeRepr getImmediateCastTypeRepr() {
+    /**
+     * Gets the cast type representation of this is pattern, if it exists.
+     */
+    TypeRepr getCastTypeRepr() {
       result =
         Synth::convertTypeReprFromRaw(Synth::convertIsPatternToRaw(this)
               .(Raw::IsPattern)
               .getCastTypeRepr())
     }
 
-    final TypeRepr getCastTypeRepr() { result = getImmediateCastTypeRepr().resolve() }
+    /**
+     * Holds if `getCastTypeRepr()` exists.
+     */
+    final predicate hasCastTypeRepr() { exists(this.getCastTypeRepr()) }
 
-    final predicate hasCastTypeRepr() { exists(getCastTypeRepr()) }
-
+    /**
+     * Gets the sub pattern of this is pattern, if it exists.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Pattern getImmediateSubPattern() {
       result =
         Synth::convertPatternFromRaw(Synth::convertIsPatternToRaw(this)
@@ -26,8 +36,19 @@ module Generated {
               .getSubPattern())
     }
 
-    final Pattern getSubPattern() { result = getImmediateSubPattern().resolve() }
+    /**
+     * Gets the sub pattern of this is pattern, if it exists.
+     */
+    final Pattern getSubPattern() {
+      exists(Pattern immediate |
+        immediate = this.getImmediateSubPattern() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final predicate hasSubPattern() { exists(getSubPattern()) }
+    /**
+     * Holds if `getSubPattern()` exists.
+     */
+    final predicate hasSubPattern() { exists(this.getSubPattern()) }
   }
 }

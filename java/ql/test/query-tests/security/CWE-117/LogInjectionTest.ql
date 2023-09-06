@@ -8,10 +8,4 @@ private class TestSource extends RemoteFlowSource {
   override string getSourceType() { result = "test source" }
 }
 
-private class LogInjectionTest extends InlineFlowTest {
-  override DataFlow::Configuration getValueFlowConfig() { none() }
-
-  override TaintTracking::Configuration getTaintFlowConfig() {
-    result instanceof LogInjectionConfiguration
-  }
-}
+import TaintFlowTest<LogInjectionConfig>

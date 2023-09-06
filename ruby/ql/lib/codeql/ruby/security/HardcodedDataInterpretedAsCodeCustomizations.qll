@@ -79,7 +79,7 @@ module HardcodedDataInterpretedAsCode {
       forex(StringComponentCfgNode c |
         c = this.asExpr().(ExprNodes::StringlikeLiteralCfgNode).getAComponent()
       |
-        c.getNode().(Ast::StringEscapeSequenceComponent).getRawText().matches("\\x%")
+        c.getAstNode().(Ast::StringEscapeSequenceComponent).getRawText().matches("\\x%")
       )
     }
   }
@@ -87,9 +87,7 @@ module HardcodedDataInterpretedAsCode {
   /**
    * A code injection sink; hard-coded data should not flow here.
    */
-  private class DefaultCodeInjectionSink extends Sink {
-    DefaultCodeInjectionSink() { this instanceof CodeInjection::Sink }
-
+  private class DefaultCodeInjectionSink extends Sink instanceof CodeInjection::Sink {
     override string getKind() { result = "code" }
   }
 

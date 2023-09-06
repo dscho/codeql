@@ -6,6 +6,10 @@ private import semmle.code.java.dataflow.ExternalFlow
 private import semmle.code.java.dataflow.FlowSteps
 private import semmle.code.java.frameworks.android.WebView
 
+private class ActivateModels extends ActiveExperimentalModels {
+  ActivateModels() { this = "android-web-resource-response" }
+}
+
 /**
  * The Android class `android.webkit.WebResourceRequest` for handling web requests.
  */
@@ -51,10 +55,14 @@ class WebResourceResponseSink extends DataFlow::Node {
 }
 
 /**
- * A value step from the URL argument of `WebView::loadUrl` to the URL parameter of
+ * A taint step from the URL argument of `WebView::loadUrl` to the URL/WebResourceRequest parameter of
  * `WebViewClient::shouldInterceptRequest`.
+ *
+ * TODO: This ought to be a value step when it is targeting the URL parameter,
+ * and it ought to check the parameter type in both cases to ensure that we only
+ * hit the overloads we intend to.
  */
-private class FetchUrlStep extends AdditionalValueStep {
+private class FetchUrlStep extends AdditionalTaintStep {
   override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
     exists(
       // webview.loadUrl(url) -> webview.setWebViewClient(new WebViewClient() { shouldInterceptRequest(view, url) });
@@ -66,16 +74,5 @@ private class FetchUrlStep extends AdditionalValueStep {
       pred.asExpr() = lma.getArgument(0) and
       succ.asParameter() = im.getParameter(1)
     )
-  }
-}
-
-/** Value/taint steps relating to url loading and file reading in an Android application. */
-private class LoadUrlSummaries extends SummaryModelCsv {
-  override predicate row(string row) {
-    row =
-      [
-        "java.io;FileInputStream;true;FileInputStream;;;Argument[0];Argument[-1];taint;manual",
-        "android.webkit;WebResourceRequest;false;getUrl;;;Argument[-1];ReturnValue;taint;manual"
-      ]
   }
 }

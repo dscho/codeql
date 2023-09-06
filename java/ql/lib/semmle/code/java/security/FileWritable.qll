@@ -5,8 +5,8 @@ import java
  */
 class SetWritable extends Method {
   SetWritable() {
-    getDeclaringType() instanceof TypeFile and
-    hasName("setWritable")
+    this.getDeclaringType() instanceof TypeFile and
+    this.hasName("setWritable")
   }
 }
 
@@ -118,9 +118,9 @@ private predicate fileSetWorldWritable(VarAccess fileAccess, Expr setWorldWritab
   )
   or
   // Calls to something that indirectly sets the file permissions.
-  exists(Call call, int parameterPos, VarAccess nestedFileAccess, Expr nestedSetWorldWritable |
+  exists(Call call, int parameterPos, VarAccess nestedFileAccess |
     call = setWorldWritable and
-    fileSetWorldWritable(nestedFileAccess, nestedSetWorldWritable) and
+    fileSetWorldWritable(nestedFileAccess, _) and
     call.getCallee().getParameter(parameterPos) = nestedFileAccess.getVariable() and
     fileAccess = call.getArgument(parameterPos)
   )

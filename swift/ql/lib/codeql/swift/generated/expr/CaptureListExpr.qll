@@ -9,21 +9,32 @@ module Generated {
   class CaptureListExpr extends Synth::TCaptureListExpr, Expr {
     override string getAPrimaryQlClass() { result = "CaptureListExpr" }
 
-    PatternBindingDecl getImmediateBindingDecl(int index) {
+    /**
+     * Gets the `index`th binding declaration of this capture list expression (0-based).
+     */
+    PatternBindingDecl getBindingDecl(int index) {
       result =
         Synth::convertPatternBindingDeclFromRaw(Synth::convertCaptureListExprToRaw(this)
               .(Raw::CaptureListExpr)
               .getBindingDecl(index))
     }
 
-    final PatternBindingDecl getBindingDecl(int index) {
-      result = getImmediateBindingDecl(index).resolve()
-    }
+    /**
+     * Gets any of the binding declarations of this capture list expression.
+     */
+    final PatternBindingDecl getABindingDecl() { result = this.getBindingDecl(_) }
 
-    final PatternBindingDecl getABindingDecl() { result = getBindingDecl(_) }
+    /**
+     * Gets the number of binding declarations of this capture list expression.
+     */
+    final int getNumberOfBindingDecls() { result = count(int i | exists(this.getBindingDecl(i))) }
 
-    final int getNumberOfBindingDecls() { result = count(getABindingDecl()) }
-
+    /**
+     * Gets the closure body of this capture list expression.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     ClosureExpr getImmediateClosureBody() {
       result =
         Synth::convertClosureExprFromRaw(Synth::convertCaptureListExprToRaw(this)
@@ -31,6 +42,14 @@ module Generated {
               .getClosureBody())
     }
 
-    final ClosureExpr getClosureBody() { result = getImmediateClosureBody().resolve() }
+    /**
+     * Gets the closure body of this capture list expression.
+     */
+    final ClosureExpr getClosureBody() {
+      exists(ClosureExpr immediate |
+        immediate = this.getImmediateClosureBody() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
   }
 }

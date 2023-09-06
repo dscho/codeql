@@ -7,6 +7,12 @@ module Generated {
   class DynamicTypeExpr extends Synth::TDynamicTypeExpr, Expr {
     override string getAPrimaryQlClass() { result = "DynamicTypeExpr" }
 
+    /**
+     * Gets the base of this dynamic type expression.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateBase() {
       result =
         Synth::convertExprFromRaw(Synth::convertDynamicTypeExprToRaw(this)
@@ -14,6 +20,14 @@ module Generated {
               .getBase())
     }
 
-    final Expr getBase() { result = getImmediateBase().resolve() }
+    /**
+     * Gets the base of this dynamic type expression.
+     */
+    final Expr getBase() {
+      exists(Expr immediate |
+        immediate = this.getImmediateBase() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
   }
 }

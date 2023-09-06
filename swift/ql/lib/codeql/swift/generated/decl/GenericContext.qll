@@ -6,19 +6,26 @@ import codeql.swift.elements.decl.GenericTypeParamDecl
 
 module Generated {
   class GenericContext extends Synth::TGenericContext, Element {
-    GenericTypeParamDecl getImmediateGenericTypeParam(int index) {
+    /**
+     * Gets the `index`th generic type parameter of this generic context (0-based).
+     */
+    GenericTypeParamDecl getGenericTypeParam(int index) {
       result =
         Synth::convertGenericTypeParamDeclFromRaw(Synth::convertGenericContextToRaw(this)
               .(Raw::GenericContext)
               .getGenericTypeParam(index))
     }
 
-    final GenericTypeParamDecl getGenericTypeParam(int index) {
-      result = getImmediateGenericTypeParam(index).resolve()
+    /**
+     * Gets any of the generic type parameters of this generic context.
+     */
+    final GenericTypeParamDecl getAGenericTypeParam() { result = this.getGenericTypeParam(_) }
+
+    /**
+     * Gets the number of generic type parameters of this generic context.
+     */
+    final int getNumberOfGenericTypeParams() {
+      result = count(int i | exists(this.getGenericTypeParam(i)))
     }
-
-    final GenericTypeParamDecl getAGenericTypeParam() { result = getGenericTypeParam(_) }
-
-    final int getNumberOfGenericTypeParams() { result = count(getAGenericTypeParam()) }
   }
 }

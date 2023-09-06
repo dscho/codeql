@@ -9,6 +9,12 @@ module Generated {
   class RepeatWhileStmt extends Synth::TRepeatWhileStmt, LabeledStmt {
     override string getAPrimaryQlClass() { result = "RepeatWhileStmt" }
 
+    /**
+     * Gets the condition of this repeat while statement.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateCondition() {
       result =
         Synth::convertExprFromRaw(Synth::convertRepeatWhileStmtToRaw(this)
@@ -16,15 +22,24 @@ module Generated {
               .getCondition())
     }
 
-    final Expr getCondition() { result = getImmediateCondition().resolve() }
+    /**
+     * Gets the condition of this repeat while statement.
+     */
+    final Expr getCondition() {
+      exists(Expr immediate |
+        immediate = this.getImmediateCondition() and
+        result = immediate.resolve()
+      )
+    }
 
-    Stmt getImmediateBody() {
+    /**
+     * Gets the body of this repeat while statement.
+     */
+    Stmt getBody() {
       result =
         Synth::convertStmtFromRaw(Synth::convertRepeatWhileStmtToRaw(this)
               .(Raw::RepeatWhileStmt)
               .getBody())
     }
-
-    final Stmt getBody() { result = getImmediateBody().resolve() }
   }
 }

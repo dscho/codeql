@@ -8,11 +8,12 @@ module Generated {
   class WhileStmt extends Synth::TWhileStmt, LabeledConditionalStmt {
     override string getAPrimaryQlClass() { result = "WhileStmt" }
 
-    Stmt getImmediateBody() {
+    /**
+     * Gets the body of this while statement.
+     */
+    Stmt getBody() {
       result =
         Synth::convertStmtFromRaw(Synth::convertWhileStmtToRaw(this).(Raw::WhileStmt).getBody())
     }
-
-    final Stmt getBody() { result = getImmediateBody().resolve() }
   }
 }

@@ -57,13 +57,6 @@ private predicate isObjectClass(Class c) { c instanceof ObjectType }
  */
 class ValueOrRefType extends DotNet::ValueOrRefType, Type, Attributable, @value_or_ref_type {
   /**
-   * DEPRECATED: use `getUndecoratedName()` instead.
-   *
-   * Gets the name of this type without `<...>` brackets, in case it is a generic type.
-   */
-  deprecated string getNameWithoutBrackets() { types(this, _, result) }
-
-  /**
    * Holds if this type has the qualified name `qualifier`.`name`.
    *
    * For example the class `System.IO.IOException` has
@@ -76,7 +69,7 @@ class ValueOrRefType extends DotNet::ValueOrRefType, Type, Attributable, @value_
     )
     or
     not exists(this.getDeclaringType()) and
-    qualifier = this.getNamespace().getQualifiedName() and
+    qualifier = this.getNamespace().getFullName() and
     name = this.getUndecoratedName()
   }
 
@@ -788,16 +781,6 @@ class Class extends RefType, @class_type {
 }
 
 /**
- * DEPRECATED: Use `RecordClass` instead.
- */
-deprecated class Record extends Class {
-  Record() { this.isRecord() }
-
-  /** Gets the clone method of this record. */
-  RecordCloneMethod getCloneMethod() { result = this.getAMember() }
-}
-
-/**
  * A `record`, for example
  *
  * ```csharp
@@ -824,13 +807,15 @@ class RecordClass extends RecordType, Class {
  */
 class AnonymousClass extends Class {
   AnonymousClass() { anonymous_types(this) }
+
+  override string getAPrimaryQlClass() { result = "AnonymousClass" }
 }
 
 /**
  * The `object` type, `System.Object`.
  */
 class ObjectType extends Class {
-  ObjectType() { this.hasQualifiedName("System.Object") }
+  ObjectType() { this.hasQualifiedName("System", "Object") }
 
   override string toStringWithTypes() { result = "object" }
 
@@ -841,7 +826,7 @@ class ObjectType extends Class {
  * The `string` type, `System.String`.
  */
 class StringType extends Class {
-  StringType() { this.hasQualifiedName("System.String") }
+  StringType() { this.hasQualifiedName("System", "String") }
 
   override string toStringWithTypes() { result = "string" }
 
@@ -989,28 +974,26 @@ class NullType extends RefType, @null_type {
 /**
  * A nullable type, for example `int?`.
  */
-class NullableType extends ValueType, DotNet::ConstructedGeneric, @nullable_type {
+class NullableType extends ValueType, ConstructedType, @nullable_type {
   /**
    * Gets the underlying value type of this nullable type.
    * For example `int` in `int?`.
    */
   Type getUnderlyingType() { nullable_underlying_type(this, getTypeRef(result)) }
 
+  override UnboundGenericStruct getUnboundGeneric() {
+    result.hasQualifiedName("System", "Nullable<>")
+  }
+
   override string toStringWithTypes() {
     result = this.getUnderlyingType().toStringWithTypes() + "?"
   }
-
-  override Type getChild(int n) { result = this.getUnderlyingType() and n = 0 }
 
   override Location getALocation() { result = this.getUnderlyingType().getALocation() }
 
   override Type getTypeArgument(int p) { p = 0 and result = this.getUnderlyingType() }
 
   override string getAPrimaryQlClass() { result = "NullableType" }
-
-  final override string getName() {
-    result = "Nullable<" + this.getUnderlyingType().getName() + ">"
-  }
 
   final override predicate hasQualifiedName(string qualifier, string name) {
     qualifier = "System" and
@@ -1141,7 +1124,10 @@ class ArglistType extends Type, @arglist_type {
  * A type that could not be resolved. This could happen if an indirect reference
  * is not available at compilation time.
  */
-class UnknownType extends Type, @unknown_type { }
+class UnknownType extends Type, @unknown_type {
+  /** Holds if this is the canonical unknown type, and not a type that failed to extract properly. */
+  predicate isCanonical() { types(this, _, "<unknown type>") }
+}
 
 /**
  * A type representing a tuple. For example, `(int, bool, string)`.

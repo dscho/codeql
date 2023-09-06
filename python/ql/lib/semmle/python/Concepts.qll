@@ -9,6 +9,7 @@ private import semmle.python.dataflow.new.DataFlow
 private import semmle.python.dataflow.new.RemoteFlowSources
 private import semmle.python.dataflow.new.TaintTracking
 private import semmle.python.Frameworks
+private import semmle.python.security.internal.EncryptionKeySizes
 
 /**
  * A data-flow node that executes an operating system command,
@@ -18,6 +19,9 @@ private import semmle.python.Frameworks
  * extend `SystemCommandExecution::Range` instead.
  */
 class SystemCommandExecution extends DataFlow::Node instanceof SystemCommandExecution::Range {
+  /** Holds if a shell interprets `arg`. */
+  predicate isShellInterpreted(DataFlow::Node arg) { super.isShellInterpreted(arg) }
+
   /** Gets the argument that specifies the command to be executed. */
   DataFlow::Node getCommand() { result = super.getCommand() }
 }
@@ -34,6 +38,9 @@ module SystemCommandExecution {
   abstract class Range extends DataFlow::Node {
     /** Gets the argument that specifies the command to be executed. */
     abstract DataFlow::Node getCommand();
+
+    /** Holds if a shell interprets `arg`. */
+    predicate isShellInterpreted(DataFlow::Node arg) { none() }
   }
 }
 
@@ -311,7 +318,7 @@ module CodeExecution {
  * Often, it is worthy of an alert if an SQL statement is constructed such that
  * executing it would be a security risk.
  *
- * If it is important that the SQL statement is indeed executed, then use `SQLExecution`.
+ * If it is important that the SQL statement is indeed executed, then use `SqlExecution`.
  *
  * Extend this class to refine existing API models. If you want to model new APIs,
  * extend `SqlConstruction::Range` instead.
@@ -329,7 +336,7 @@ module SqlConstruction {
    * Often, it is worthy of an alert if an SQL statement is constructed such that
    * executing it would be a security risk.
    *
-   * If it is important that the SQL statement is indeed executed, then use `SQLExecution`.
+   * If it is important that the SQL statement is indeed executed, then use `SqlExecution`.
    *
    * Extend this class to model new APIs. If you want to refine existing API models,
    * extend `SqlConstruction` instead.
@@ -412,6 +419,24 @@ module RegexExecution {
      */
     abstract string getName();
   }
+}
+
+/**
+ * A node where a string is interpreted as a regular expression,
+ * for instance an argument to `re.compile`.
+ *
+ * Extend this class to refine existing API models. If you want to model new APIs,
+ * extend `RegExpInterpretation::Range` instead.
+ */
+class RegExpInterpretation extends DataFlow::Node instanceof RegExpInterpretation::Range { }
+
+/** Provides a class for modeling regular expression interpretations. */
+module RegExpInterpretation {
+  /**
+   * A node where a string is interpreted as a regular expression,
+   * for instance an argument to `re.compile`.
+   */
+  abstract class Range extends DataFlow::Node { }
 }
 
 /** Provides classes for modeling XML-related APIs. */
@@ -655,6 +680,9 @@ module Escaping {
   /** Gets the escape-kind for escaping a string so it can safely be included in HTML. */
   string getHtmlKind() { result = "html" }
 
+  /** Gets the escape-kind for escaping a string so it can safely be included in XML. */
+  string getXmlKind() { result = "xml" }
+
   /** Gets the escape-kind for escaping a string so it can safely be included in a regular expression. */
   string getRegexKind() { result = "regex" }
 
@@ -683,6 +711,15 @@ module Escaping {
  */
 class HtmlEscaping extends Escaping {
   HtmlEscaping() { super.getKind() = Escaping::getHtmlKind() }
+}
+
+/**
+ * An escape of a string so it can be safely included in
+ * the body of an XML element, for example, replacing `&` and `<>` in
+ * `<foo>&xxe;<foo>`.
+ */
+class XmlEscaping extends Escaping {
+  XmlEscaping() { super.getKind() = Escaping::getXmlKind() }
 }
 
 /**
@@ -1018,7 +1055,8 @@ module Http {
      * Extend this class to refine existing API models. If you want to model new APIs,
      * extend `CsrfLocalProtectionSetting::Range` instead.
      */
-    class CsrfLocalProtectionSetting extends DataFlow::Node instanceof CsrfLocalProtectionSetting::Range {
+    class CsrfLocalProtectionSetting extends DataFlow::Node instanceof CsrfLocalProtectionSetting::Range
+    {
       /**
        * Gets a request handler whose CSRF protection is changed.
        */
@@ -1141,21 +1179,21 @@ module Cryptography {
       abstract class RsaRange extends Range {
         final override string getName() { result = "RSA" }
 
-        final override int minimumSecureKeySize() { result = 2048 }
+        final override int minimumSecureKeySize() { result = minSecureKeySizeRsa() }
       }
 
       /** A data-flow node that generates a new DSA key-pair. */
       abstract class DsaRange extends Range {
         final override string getName() { result = "DSA" }
 
-        final override int minimumSecureKeySize() { result = 2048 }
+        final override int minimumSecureKeySize() { result = minSecureKeySizeDsa() }
       }
 
       /** A data-flow node that generates a new ECC key-pair. */
       abstract class EccRange extends Range {
         final override string getName() { result = "ECC" }
 
-        final override int minimumSecureKeySize() { result = 224 }
+        final override int minimumSecureKeySize() { result = minSecureKeySizeEcc() }
       }
     }
   }

@@ -10,19 +10,32 @@ module Generated {
   class SubscriptDecl extends Synth::TSubscriptDecl, AbstractStorageDecl, GenericContext {
     override string getAPrimaryQlClass() { result = "SubscriptDecl" }
 
-    ParamDecl getImmediateParam(int index) {
+    /**
+     * Gets the `index`th parameter of this subscript declaration (0-based).
+     */
+    ParamDecl getParam(int index) {
       result =
         Synth::convertParamDeclFromRaw(Synth::convertSubscriptDeclToRaw(this)
               .(Raw::SubscriptDecl)
               .getParam(index))
     }
 
-    final ParamDecl getParam(int index) { result = getImmediateParam(index).resolve() }
+    /**
+     * Gets any of the parameters of this subscript declaration.
+     */
+    final ParamDecl getAParam() { result = this.getParam(_) }
 
-    final ParamDecl getAParam() { result = getParam(_) }
+    /**
+     * Gets the number of parameters of this subscript declaration.
+     */
+    final int getNumberOfParams() { result = count(int i | exists(this.getParam(i))) }
 
-    final int getNumberOfParams() { result = count(getAParam()) }
-
+    /**
+     * Gets the element type of this subscript declaration.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateElementType() {
       result =
         Synth::convertTypeFromRaw(Synth::convertSubscriptDeclToRaw(this)
@@ -30,6 +43,14 @@ module Generated {
               .getElementType())
     }
 
-    final Type getElementType() { result = getImmediateElementType().resolve() }
+    /**
+     * Gets the element type of this subscript declaration.
+     */
+    final Type getElementType() {
+      exists(Type immediate |
+        immediate = this.getImmediateElementType() and
+        result = immediate.resolve()
+      )
+    }
   }
 }

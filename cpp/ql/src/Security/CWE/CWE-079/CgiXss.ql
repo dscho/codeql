@@ -13,20 +13,20 @@
 
 import cpp
 import semmle.code.cpp.commons.Environment
-import semmle.code.cpp.security.TaintTracking
+import semmle.code.cpp.ir.dataflow.internal.DefaultTaintTrackingImpl
 import TaintedWithPath
 
 /** A call that prints its arguments to `stdout`. */
 class PrintStdoutCall extends FunctionCall {
   PrintStdoutCall() {
-    getTarget().hasGlobalOrStdName("puts") or
-    getTarget().hasGlobalOrStdName("printf")
+    this.getTarget().hasGlobalOrStdName("puts") or
+    this.getTarget().hasGlobalOrStdName("printf")
   }
 }
 
 /** A read of the QUERY_STRING environment variable */
 class QueryString extends EnvironmentRead {
-  QueryString() { getEnvironmentVariable() = "QUERY_STRING" }
+  QueryString() { this.getEnvironmentVariable() = "QUERY_STRING" }
 }
 
 class Configuration extends TaintTrackingConfiguration {

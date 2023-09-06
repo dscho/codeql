@@ -1,17 +1,16 @@
 import java
 import TestUtilities.InlineExpectationsTest
-import semmle.code.java.security.regexp.ExponentialBackTracking
+private import semmle.code.java.regex.RegexTreeView::RegexTreeView as TreeView
+import codeql.regex.nfa.ExponentialBackTracking::Make<TreeView> as ExponentialBackTracking
 import semmle.code.java.regex.regex
 
-class HasExpRedos extends InlineExpectationsTest {
-  HasExpRedos() { this = "HasExpRedos" }
+module HasExpRedos implements TestSig {
+  string getARelevantTag() { result = ["hasExpRedos", "hasParseFailure"] }
 
-  override string getARelevantTag() { result = ["hasExpRedos", "hasParseFailure"] }
-
-  override predicate hasActualResult(Location location, string element, string tag, string value) {
+  predicate hasActualResult(Location location, string element, string tag, string value) {
     tag = "hasExpRedos" and
-    exists(RegExpTerm t, string pump, State s, string prefixMsg |
-      hasReDoSResult(t, pump, s, prefixMsg) and
+    exists(TreeView::RegExpTerm t |
+      ExponentialBackTracking::hasReDoSResult(t, _, _, _) and
       not t.getRegex().getAMode() = "VERBOSE" and
       value = "" and
       location = t.getLocation() and
@@ -27,3 +26,5 @@ class HasExpRedos extends InlineExpectationsTest {
     )
   }
 }
+
+import MakeTest<HasExpRedos>

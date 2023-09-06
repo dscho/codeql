@@ -8,13 +8,14 @@ module Generated {
   class SuperRefExpr extends Synth::TSuperRefExpr, Expr {
     override string getAPrimaryQlClass() { result = "SuperRefExpr" }
 
-    VarDecl getImmediateSelf() {
+    /**
+     * Gets the self of this super reference expression.
+     */
+    VarDecl getSelf() {
       result =
         Synth::convertVarDeclFromRaw(Synth::convertSuperRefExprToRaw(this)
               .(Raw::SuperRefExpr)
               .getSelf())
     }
-
-    final VarDecl getSelf() { result = getImmediateSelf().resolve() }
   }
 }

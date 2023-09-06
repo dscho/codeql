@@ -1,3 +1,154 @@
+## 0.7.3
+
+No user-facing changes.
+
+## 0.7.2
+
+No user-facing changes.
+
+## 0.7.1
+
+### Minor Analysis Improvements
+
+* The `fs/promises` package is now recognised as an alias for `require('fs').promises`.
+* The `js/path-injection` query can now track taint through calls to `path.join()` with a spread argument, such as `path.join(baseDir, ...args)`.
+
+## 0.7.0
+
+### Bug Fixes
+
+* The query "Arbitrary file write during zip extraction ("Zip Slip")" (`js/zipslip`) has been renamed to "Arbitrary file access during archive extraction ("Zip Slip")."
+
+## 0.6.4
+
+No user-facing changes.
+
+## 0.6.3
+
+### Minor Analysis Improvements
+
+* Fixed an issue where calls to a method named `search` would lead to false positive alerts related to regular expressions.
+  This happened when the call was incorrectly seen as a call to `String.prototype.search`, since this function converts its first argument
+  to a regular expression. The analysis is now more restrictive about when to treat `search` calls as regular expression sinks.
+
+## 0.6.2
+
+### Major Analysis Improvements
+
+* Added taint sources from the `@actions/core` and `@actions/github` packages.
+* Added command-injection sinks from the `@actions/exec` package.
+
+### Minor Analysis Improvements
+
+* The `js/indirect-command-line-injection` query no longer flags command arguments that cannot be interpreted as a shell string.
+* The `js/unsafe-deserialization` query no longer flags deserialization through the `js-yaml` library, except
+  when it is used with an unsafe schema.
+* The Forge module in `CryptoLibraries.qll` now correctly classifies SHA-512/224,
+  SHA-512/256, and SHA-512/384 hashes used in message digests as NonKeyCiphers.
+
+### Bug Fixes
+
+* Fixed a spurious diagnostic warning about comments in JSON files being illegal.
+  Comments in JSON files are in fact fully supported, and the diagnostic message was misleading.
+
+## 0.6.1
+
+### Minor Analysis Improvements
+
+* Improved the call graph to better handle the case where a function is stored on
+  a plain object and subsequently copied to a new host object via an `extend` call.
+
+### Bug Fixes
+
+* Fixes an issue that would cause TypeScript extraction to hang in rare cases when extracting
+  code containing recursive generic type aliases.
+
+## 0.6.0
+
+### Minor Analysis Improvements
+
+* The `DisablingCertificateValidation.ql` query has been updated to check `createServer` from `https` for disabled certificate validation.
+* Improved the model of jQuery to account for XSS sinks where the HTML string
+  is provided via a callback. This may lead to more results for the `js/xss` query.
+* The `js/weak-cryptographic-algorithm` query now flags cryptograhic operations using a weak block mode,
+  such as AES-ECB.
+
+### Bug Fixes
+
+* Fixed a bug where a destructuring pattern could not be parsed if it had a property
+  named `get` or `set` with a default value.
+
+## 0.5.6
+
+No user-facing changes.
+
+## 0.5.5
+
+### Minor Analysis Improvements
+
+* The following queries now recognize HTML sanitizers as propagating taint: `js/sql-injection`,
+  `js/path-injection`, `js/server-side-unvalidated-url-redirection`, `js/client-side-unvalidated-url-redirection`,
+  and `js/request-forgery`.
+
+## 0.5.4
+
+### Minor Analysis Improvements
+
+* The `js/regex-injection` query now recognizes environment variables and command-line arguments as sources.
+
+## 0.5.3
+
+No user-facing changes.
+
+## 0.5.2
+
+No user-facing changes.
+
+## 0.5.1
+
+No user-facing changes.
+
+## 0.5.0
+
+### Minor Analysis Improvements
+
+* The `AlertSuppression.ql` query has been updated to support the new `// codeql[query-id]` supression comments. These comments can be used to suppress an alert and must be placed on a blank line before the alert. In addition the legacy `// lgtm` and `// lgtm[query-id]` comments can now also be placed on the line before an alert.
+
+## 0.4.6
+
+No user-facing changes.
+
+## 0.4.5
+
+No user-facing changes.
+
+## 0.4.4
+
+### Minor Analysis Improvements
+
+* Added support for `@hapi/glue` and Hapi plugins to the `frameworks/Hapi.qll` library.
+
+### Bug Fixes
+
+* Fixed a bug that would cause the extractor to crash when an `import` type is used in
+  the `extends` clause of an `interface`.
+* Fixed an issue with multi-line strings in YAML files being associated with an invalid location,
+  causing alerts related to such strings to appear at the top of the YAML file.
+
+## 0.4.3
+
+### New Queries
+
+* Added a new query, `js/second-order-command-line-injection`, to detect shell
+  commands that may execute arbitrary code when the user has control over 
+  the arguments to a command-line program.
+  This currently flags up unsafe invocations of git and hg.
+
+### Minor Analysis Improvements
+
+* Added sources for user defined path and query parameters in `Next.js`.
+* The alert message of many queries have been changed to better follow the style guide and make the message consistent with other languages.
+
 ## 0.4.2
 
 ### Minor Analysis Improvements
@@ -134,7 +285,7 @@ No user-facing changes.
   The query is not run by default.
 * A new query `js/file-system-race` has been added. The query detects when there is time between a file being checked and used. The query is not run by default.
 * A new query `js/jwt-missing-verification` has been added. The query detects applications that don't verify JWT tokens.
-* The `js/insecure-dependency` query has been added. It detects depedencies that are downloaded using an unencrypted connection.
+* The `js/insecure-dependency` query has been added. It detects dependencies that are downloaded using an unencrypted connection.
 
 ## 0.0.9
 

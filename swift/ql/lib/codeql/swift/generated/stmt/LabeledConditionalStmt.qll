@@ -6,13 +6,14 @@ import codeql.swift.elements.stmt.StmtCondition
 
 module Generated {
   class LabeledConditionalStmt extends Synth::TLabeledConditionalStmt, LabeledStmt {
-    StmtCondition getImmediateCondition() {
+    /**
+     * Gets the condition of this labeled conditional statement.
+     */
+    StmtCondition getCondition() {
       result =
         Synth::convertStmtConditionFromRaw(Synth::convertLabeledConditionalStmtToRaw(this)
               .(Raw::LabeledConditionalStmt)
               .getCondition())
     }
-
-    final StmtCondition getCondition() { result = getImmediateCondition().resolve() }
   }
 }

@@ -8,6 +8,12 @@ module Generated {
   class DependentMemberType extends Synth::TDependentMemberType, Type {
     override string getAPrimaryQlClass() { result = "DependentMemberType" }
 
+    /**
+     * Gets the base type of this dependent member type.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateBaseType() {
       result =
         Synth::convertTypeFromRaw(Synth::convertDependentMemberTypeToRaw(this)
@@ -15,17 +21,24 @@ module Generated {
               .getBaseType())
     }
 
-    final Type getBaseType() { result = getImmediateBaseType().resolve() }
+    /**
+     * Gets the base type of this dependent member type.
+     */
+    final Type getBaseType() {
+      exists(Type immediate |
+        immediate = this.getImmediateBaseType() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    AssociatedTypeDecl getImmediateAssociatedTypeDecl() {
+    /**
+     * Gets the associated type declaration of this dependent member type.
+     */
+    AssociatedTypeDecl getAssociatedTypeDecl() {
       result =
         Synth::convertAssociatedTypeDeclFromRaw(Synth::convertDependentMemberTypeToRaw(this)
               .(Raw::DependentMemberType)
               .getAssociatedTypeDecl())
-    }
-
-    final AssociatedTypeDecl getAssociatedTypeDecl() {
-      result = getImmediateAssociatedTypeDecl().resolve()
     }
   }
 }

@@ -5,7 +5,18 @@ import codeql.swift.elements.expr.ApplyExpr
 import codeql.swift.elements.expr.Expr
 
 module Generated {
+  /**
+   * INTERNAL: Do not use.
+   * An internal raw instance of method lookups like `x.foo` in `x.foo()`.
+   * This is completely replaced by the synthesized type `MethodLookupExpr`.
+   */
   class SelfApplyExpr extends Synth::TSelfApplyExpr, ApplyExpr {
+    /**
+     * Gets the base of this self apply expression.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateBase() {
       result =
         Synth::convertExprFromRaw(Synth::convertSelfApplyExprToRaw(this)
@@ -13,6 +24,14 @@ module Generated {
               .getBase())
     }
 
-    final Expr getBase() { result = getImmediateBase().resolve() }
+    /**
+     * Gets the base of this self apply expression.
+     */
+    final Expr getBase() {
+      exists(Expr immediate |
+        immediate = this.getImmediateBase() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
   }
 }

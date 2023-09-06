@@ -8,15 +8,19 @@ module Generated {
   class TypeExpr extends Synth::TTypeExpr, Expr {
     override string getAPrimaryQlClass() { result = "TypeExpr" }
 
-    TypeRepr getImmediateTypeRepr() {
+    /**
+     * Gets the type representation of this type expression, if it exists.
+     */
+    TypeRepr getTypeRepr() {
       result =
         Synth::convertTypeReprFromRaw(Synth::convertTypeExprToRaw(this)
               .(Raw::TypeExpr)
               .getTypeRepr())
     }
 
-    final TypeRepr getTypeRepr() { result = getImmediateTypeRepr().resolve() }
-
-    final predicate hasTypeRepr() { exists(getTypeRepr()) }
+    /**
+     * Holds if `getTypeRepr()` exists.
+     */
+    final predicate hasTypeRepr() { exists(this.getTypeRepr()) }
   }
 }

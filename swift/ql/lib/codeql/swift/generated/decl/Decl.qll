@@ -6,11 +6,33 @@ import codeql.swift.elements.decl.ModuleDecl
 
 module Generated {
   class Decl extends Synth::TDecl, AstNode {
-    ModuleDecl getImmediateModule() {
+    /**
+     * Gets the module of this declaration.
+     */
+    ModuleDecl getModule() {
       result =
         Synth::convertModuleDeclFromRaw(Synth::convertDeclToRaw(this).(Raw::Decl).getModule())
     }
 
-    final ModuleDecl getModule() { result = getImmediateModule().resolve() }
+    /**
+     * Gets the `index`th member of this declaration (0-based).
+     *
+     * Prefer to use more specific methods (such as `EnumDecl.getEnumElement`) rather than relying
+     * on the order of members given by `getMember`. In some cases the order of members may not
+     * align with expectations, and could change in future releases.
+     */
+    Decl getMember(int index) {
+      result = Synth::convertDeclFromRaw(Synth::convertDeclToRaw(this).(Raw::Decl).getMember(index))
+    }
+
+    /**
+     * Gets any of the members of this declaration.
+     */
+    final Decl getAMember() { result = this.getMember(_) }
+
+    /**
+     * Gets the number of members of this declaration.
+     */
+    final int getNumberOfMembers() { result = count(int i | exists(this.getMember(i))) }
   }
 }

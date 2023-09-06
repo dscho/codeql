@@ -9,27 +9,46 @@ module Generated {
   class TapExpr extends Synth::TTapExpr, Expr {
     override string getAPrimaryQlClass() { result = "TapExpr" }
 
+    /**
+     * Gets the sub expression of this tap expression, if it exists.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateSubExpr() {
       result =
         Synth::convertExprFromRaw(Synth::convertTapExprToRaw(this).(Raw::TapExpr).getSubExpr())
     }
 
-    final Expr getSubExpr() { result = getImmediateSubExpr().resolve() }
+    /**
+     * Gets the sub expression of this tap expression, if it exists.
+     */
+    final Expr getSubExpr() {
+      exists(Expr immediate |
+        immediate = this.getImmediateSubExpr() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final predicate hasSubExpr() { exists(getSubExpr()) }
+    /**
+     * Holds if `getSubExpr()` exists.
+     */
+    final predicate hasSubExpr() { exists(this.getSubExpr()) }
 
-    BraceStmt getImmediateBody() {
+    /**
+     * Gets the body of this tap expression.
+     */
+    BraceStmt getBody() {
       result =
         Synth::convertBraceStmtFromRaw(Synth::convertTapExprToRaw(this).(Raw::TapExpr).getBody())
     }
 
-    final BraceStmt getBody() { result = getImmediateBody().resolve() }
-
-    VarDecl getImmediateVar() {
+    /**
+     * Gets the variable of this tap expression.
+     */
+    VarDecl getVar() {
       result =
         Synth::convertVarDeclFromRaw(Synth::convertTapExprToRaw(this).(Raw::TapExpr).getVar())
     }
-
-    final VarDecl getVar() { result = getImmediateVar().resolve() }
   }
 }

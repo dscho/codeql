@@ -8,11 +8,12 @@ module Generated {
   class DoStmt extends Synth::TDoStmt, LabeledStmt {
     override string getAPrimaryQlClass() { result = "DoStmt" }
 
-    BraceStmt getImmediateBody() {
+    /**
+     * Gets the body of this do statement.
+     */
+    BraceStmt getBody() {
       result =
         Synth::convertBraceStmtFromRaw(Synth::convertDoStmtToRaw(this).(Raw::DoStmt).getBody())
     }
-
-    final BraceStmt getBody() { result = getImmediateBody().resolve() }
   }
 }

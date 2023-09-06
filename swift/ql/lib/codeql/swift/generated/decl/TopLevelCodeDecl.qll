@@ -8,13 +8,14 @@ module Generated {
   class TopLevelCodeDecl extends Synth::TTopLevelCodeDecl, Decl {
     override string getAPrimaryQlClass() { result = "TopLevelCodeDecl" }
 
-    BraceStmt getImmediateBody() {
+    /**
+     * Gets the body of this top level code declaration.
+     */
+    BraceStmt getBody() {
       result =
         Synth::convertBraceStmtFromRaw(Synth::convertTopLevelCodeDeclToRaw(this)
               .(Raw::TopLevelCodeDecl)
               .getBody())
     }
-
-    final BraceStmt getBody() { result = getImmediateBody().resolve() }
   }
 }

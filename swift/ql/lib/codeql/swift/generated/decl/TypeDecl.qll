@@ -6,8 +6,17 @@ import codeql.swift.elements.decl.ValueDecl
 
 module Generated {
   class TypeDecl extends Synth::TTypeDecl, ValueDecl {
+    /**
+     * Gets the name of this type declaration.
+     */
     string getName() { result = Synth::convertTypeDeclToRaw(this).(Raw::TypeDecl).getName() }
 
+    /**
+     * Gets the `index`th base type of this type declaration (0-based).
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateBaseType(int index) {
       result =
         Synth::convertTypeFromRaw(Synth::convertTypeDeclToRaw(this)
@@ -15,10 +24,24 @@ module Generated {
               .getBaseType(index))
     }
 
-    final Type getBaseType(int index) { result = getImmediateBaseType(index).resolve() }
+    /**
+     * Gets the `index`th base type of this type declaration (0-based).
+     */
+    final Type getBaseType(int index) {
+      exists(Type immediate |
+        immediate = this.getImmediateBaseType(index) and
+        result = immediate.resolve()
+      )
+    }
 
-    final Type getABaseType() { result = getBaseType(_) }
+    /**
+     * Gets any of the base types of this type declaration.
+     */
+    final Type getABaseType() { result = this.getBaseType(_) }
 
-    final int getNumberOfBaseTypes() { result = count(getABaseType()) }
+    /**
+     * Gets the number of base types of this type declaration.
+     */
+    final int getNumberOfBaseTypes() { result = count(int i | exists(this.getBaseType(i))) }
   }
 }

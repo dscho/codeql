@@ -9,24 +9,32 @@ module Generated {
   class DoCatchStmt extends Synth::TDoCatchStmt, LabeledStmt {
     override string getAPrimaryQlClass() { result = "DoCatchStmt" }
 
-    Stmt getImmediateBody() {
+    /**
+     * Gets the body of this do catch statement.
+     */
+    Stmt getBody() {
       result =
         Synth::convertStmtFromRaw(Synth::convertDoCatchStmtToRaw(this).(Raw::DoCatchStmt).getBody())
     }
 
-    final Stmt getBody() { result = getImmediateBody().resolve() }
-
-    CaseStmt getImmediateCatch(int index) {
+    /**
+     * Gets the `index`th catch of this do catch statement (0-based).
+     */
+    CaseStmt getCatch(int index) {
       result =
         Synth::convertCaseStmtFromRaw(Synth::convertDoCatchStmtToRaw(this)
               .(Raw::DoCatchStmt)
               .getCatch(index))
     }
 
-    final CaseStmt getCatch(int index) { result = getImmediateCatch(index).resolve() }
+    /**
+     * Gets any of the catches of this do catch statement.
+     */
+    final CaseStmt getACatch() { result = this.getCatch(_) }
 
-    final CaseStmt getACatch() { result = getCatch(_) }
-
-    final int getNumberOfCatches() { result = count(getACatch()) }
+    /**
+     * Gets the number of catches of this do catch statement.
+     */
+    final int getNumberOfCatches() { result = count(int i | exists(this.getCatch(i))) }
   }
 }

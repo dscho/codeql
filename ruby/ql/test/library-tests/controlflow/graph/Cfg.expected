@@ -526,17 +526,20 @@ case.rb:
 #-----|  -> exit if_in_case (normal)
 
 #    2| call to x1
-#-----|  -> when ...
+#-----|  -> 1
 
 #    2| self
 #-----|  -> call to x1
 
-#    3| when ...
-#-----|  -> 1
+#    3| [match] when ...
+#-----| match -> self
+
+#    3| [no-match] when ...
+#-----| no-match -> 2
 
 #    3| 1
-#-----| match -> self
-#-----| no-match -> when ...
+#-----| match -> [match] when ...
+#-----| no-match -> [no-match] when ...
 
 #    3| then ...
 #-----|  -> case ...
@@ -569,12 +572,15 @@ case.rb:
 #    3| x2
 #-----|  -> "x2"
 
-#    4| when ...
-#-----|  -> 2
+#    4| [match] when ...
+#-----| match -> self
+
+#    4| [no-match] when ...
+#-----| no-match -> case ...
 
 #    4| 2
-#-----| no-match -> case ...
-#-----| match -> self
+#-----| match -> [match] when ...
+#-----| no-match -> [no-match] when ...
 
 #    4| then ...
 #-----|  -> case ...
@@ -811,7 +817,7 @@ case.rb:
 #-----|  -> [ ..., * ]
 
 #   35| [ ..., * ]
-#-----| match -> x
+#-----| false, match, true -> x
 #-----| no-match -> in ... then ...
 
 #   35| x
@@ -821,7 +827,7 @@ case.rb:
 #-----|  -> [ ..., * ]
 
 #   36| [ ..., * ]
-#-----| match -> x
+#-----| false, match, true -> x
 #-----| no-match -> in ... then ...
 
 #   36| x
@@ -836,7 +842,7 @@ case.rb:
 
 #   37| [ ..., * ]
 #-----| raise -> exit case_match_array (abnormal)
-#-----| match -> a
+#-----| false, match, true -> a
 
 #   37| a
 #-----| match -> b
@@ -881,7 +887,7 @@ case.rb:
 
 #   43| [ *,...,* ]
 #-----| raise -> exit case_match_find (abnormal)
-#-----| match -> x
+#-----| false, match, true -> x
 
 #   43| x
 #-----|  -> 1
@@ -931,7 +937,7 @@ case.rb:
 #-----| no-match -> in ... then ...
 
 #   49| { ..., ** }
-#-----| match -> 1
+#-----| false, match, true -> 1
 #-----| no-match -> in ... then ...
 
 #   49| 1
@@ -952,7 +958,7 @@ case.rb:
 #-----| no-match -> in ... then ...
 
 #   50| { ..., ** }
-#-----| match -> 1
+#-----| false, match, true -> 1
 #-----| no-match -> in ... then ...
 
 #   50| 1
@@ -968,7 +974,7 @@ case.rb:
 
 #   51| { ..., ** }
 #-----| raise -> exit case_match_hash (abnormal)
-#-----| match -> case ...
+#-----| false, match, true -> case ...
 
 #   55| case_match_variable
 #-----|  -> case_match_underscore
@@ -1372,7 +1378,7 @@ case.rb:
 
 #   91| { ..., ** }
 #-----| raise -> exit case_match_various (abnormal)
-#-----| match -> case ...
+#-----| false, match, true -> case ...
 
 #   95| case_match_guard_no_else
 #-----|  -> exit case.rb (normal)
@@ -1826,17 +1832,20 @@ cfg.rb:
 #-----|  -> call to puts
 
 #   41| case ...
-#-----|  -> when ...
+#-----|  -> b
 
 #   41| 10
-#-----|  -> when ...
-
-#   42| when ...
 #-----|  -> 1
 
-#   42| 1
+#   42| [match] when ...
 #-----| match -> self
-#-----| no-match -> when ...
+
+#   42| [no-match] when ...
+#-----| no-match -> 2
+
+#   42| 1
+#-----| match -> [match] when ...
+#-----| no-match -> [no-match] when ...
 
 #   42| then ...
 #-----|  -> case ...
@@ -1853,20 +1862,23 @@ cfg.rb:
 #   42| one
 #-----|  -> "one"
 
-#   43| when ...
-#-----|  -> 2
+#   43| [match] when ...
+#-----| match -> self
+
+#   43| [no-match] when ...
+#-----| no-match -> self
 
 #   43| 2
+#-----| match -> [match] when ...
 #-----| no-match -> 3
-#-----| match -> self
 
 #   43| 3
+#-----| match -> [match] when ...
 #-----| no-match -> 4
-#-----| match -> self
 
 #   43| 4
-#-----| match -> self
-#-----| no-match -> self
+#-----| match -> [match] when ...
+#-----| no-match -> [no-match] when ...
 
 #   43| then ...
 #-----|  -> case ...
@@ -1901,15 +1913,18 @@ cfg.rb:
 #   47| case ...
 #-----|  -> chained
 
-#   48| when ...
-#-----|  -> b
+#   48| [false] when ...
+#-----| false -> b
+
+#   48| [true] when ...
+#-----| true -> self
 
 #   48| b
 #-----|  -> 1
 
 #   48| ... == ...
-#-----| true -> self
-#-----| false -> when ...
+#-----| false -> [false] when ...
+#-----| true -> [true] when ...
 
 #   48| 1
 #-----|  -> ... == ...
@@ -1929,15 +1944,18 @@ cfg.rb:
 #   48| one
 #-----|  -> "one"
 
-#   49| when ...
-#-----|  -> b
+#   49| [false] when ...
+#-----| false -> case ...
+
+#   49| [true] when ...
+#-----| true -> self
 
 #   49| b
 #-----|  -> 0
 
 #   49| ... == ...
+#-----| true -> [true] when ...
 #-----| false -> b
-#-----| true -> self
 
 #   49| 0
 #-----|  -> ... == ...
@@ -1946,8 +1964,8 @@ cfg.rb:
 #-----|  -> 1
 
 #   49| ... > ...
-#-----| false -> case ...
-#-----| true -> self
+#-----| false -> [false] when ...
+#-----| true -> [true] when ...
 
 #   49| 1
 #-----|  -> ... > ...
@@ -2065,7 +2083,7 @@ cfg.rb:
 #-----|  -> constant
 
 #   61| ... = ...
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #   61| "constant"
 #-----|  -> ... = ...
@@ -2077,19 +2095,19 @@ cfg.rb:
 #-----|  -> pattern
 
 #   62| ... = ...
-#-----|  -> __synth__0__1
+#-----|  -> __synth__2__1
 
 #   62| 0
 #-----|  -> call to []
 
-#   62| __synth__0
+#   62| __synth__2
 #-----|  -> 0
 
 #   62| call to []
 #-----|  -> ... = ...
 
 #   62| x
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #   62| * ...
 #-----|  -> ... = ...
@@ -2103,11 +2121,11 @@ cfg.rb:
 #   62| 1
 #-----|  -> call to []
 
-#   62| __synth__0
+#   62| __synth__2
 #-----|  -> 1
 
-#   62| __synth__0__1
-#-----|  -> __synth__0
+#   62| __synth__2__1
+#-----|  -> __synth__2
 
 #   62| call to []
 #-----|  -> * ...
@@ -2118,14 +2136,14 @@ cfg.rb:
 #   62| 0
 #-----|  -> call to []
 
-#   62| __synth__0__1
+#   62| __synth__2__1
 #-----|  -> 0
 
 #   62| call to []
 #-----|  -> ... = ...
 
 #   62| y
-#-----|  -> __synth__0__1
+#-----|  -> __synth__2__1
 
 #   62| ... = ...
 #-----|  -> ...
@@ -2133,14 +2151,14 @@ cfg.rb:
 #   62| 1
 #-----|  -> call to []
 
-#   62| __synth__0__1
+#   62| __synth__2__1
 #-----|  -> 1
 
 #   62| call to []
 #-----|  -> ... = ...
 
 #   62| z
-#-----|  -> __synth__0__1
+#-----|  -> __synth__2__1
 
 #   62| * ...
 #-----|  -> ... = ...
@@ -2151,7 +2169,7 @@ cfg.rb:
 #   62| Array
 #-----|  -> 1
 
-#   62| __synth__0
+#   62| __synth__2
 #-----|  -> Array
 
 #   62| call to []
@@ -2359,7 +2377,7 @@ cfg.rb:
 #-----|  -> \u1234
 
 #   88| ... = ...
-#-----|  -> Array
+#-----|  -> x
 
 #   88| "\u1234#{...}\n"
 #-----|  -> ... = ...
@@ -2376,8 +2394,20 @@ cfg.rb:
 #   88| \n
 #-----|  -> "\u1234#{...}\n"
 
+#   90| ...
+#-----|  -> $global
+
+#   90| ... = ...
+#-----|  -> if ...
+
 #   90| ... = ...
 #-----|  -> x
+
+#   90| [false] ! ...
+#-----| false -> if ...
+
+#   90| [true] ! ...
+#-----| true -> x
 
 #   90| __synth__0__1
 #-----|  -> x
@@ -2386,7 +2416,11 @@ cfg.rb:
 #-----|  -> ... = ...
 
 #   90| call to each
-#-----|  -> $global
+#-----|  -> ...
+
+#   90| defined? ...
+#-----| false -> [true] ! ...
+#-----| true -> [false] ! ...
 
 #   90| enter { ... }
 #-----|  -> __synth__0__1
@@ -2395,6 +2429,18 @@ cfg.rb:
 
 #   90| exit { ... } (normal)
 #-----|  -> exit { ... }
+
+#   90| if ...
+#-----|  -> Array
+
+#   90| nil
+#-----|  -> ... = ...
+
+#   90| x
+#-----|  -> nil
+
+#   90| x
+#-----|  -> defined? ...
 
 #   90| { ... }
 #-----|  -> call to each
@@ -2559,7 +2605,7 @@ cfg.rb:
 #-----|  -> type
 
 #  101| value
-#-----| no-match -> 42
+#-----| false, no-match, true -> 42
 #-----| match -> key
 
 #  101| 42
@@ -2900,7 +2946,7 @@ cfg.rb:
 #-----| raise -> self
 
 #  136| ... rescue ...
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #  136| 0
 #-----|  -> ... / ...
@@ -2932,14 +2978,14 @@ cfg.rb:
 #  138| _ .. _
 #-----|  -> call to []
 
-#  138| __synth__0
+#  138| __synth__2
 #-----|  -> 0
 
 #  138| call to []
 #-----|  -> ... = ...
 
 #  138| init
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #  138| -1
 #-----|  -> call to []
@@ -2947,14 +2993,14 @@ cfg.rb:
 #  138| ... = ...
 #-----|  -> ...
 
-#  138| __synth__0
+#  138| __synth__2
 #-----|  -> -1
 
 #  138| call to []
 #-----|  -> ... = ...
 
 #  138| last
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #  138| 1
 #-----|  -> 2
@@ -2968,7 +3014,7 @@ cfg.rb:
 #  138| ..., ...
 #-----|  -> * ...
 
-#  138| __synth__0
+#  138| __synth__2
 #-----|  -> 1
 
 #  138| 2
@@ -3031,9 +3077,9 @@ cfg.rb:
 #-----|  -> exit print (normal)
 
 #  147| self
-#-----|  -> call to super
+#-----|  -> super call to print
 
-#  147| call to super
+#  147| super call to print
 #-----|  -> call to print
 
 #  147| call to print
@@ -3719,12 +3765,12 @@ cfg.rb:
 #-----|  -> exit do ... end
 
 #  208| elem
-#-----|  -> *
+#-----|  -> __synth__0
 
-#  208| *
-#-----|  -> **
+#  208| __synth__0
+#-----|  -> __synth__0
 
-#  208| **
+#  208| __synth__0
 #-----|  -> elem
 
 #  209| elem
@@ -3761,6 +3807,81 @@ cfg.rb:
 
 #  215| self
 #-----|  -> call to something_else
+
+constant_compound_assign.rb:
+#    1| Foo
+#-----|  -> foo_before
+
+#    1| enter constant_compound_assign.rb
+#-----|  -> Foo
+
+#    1| exit constant_compound_assign.rb
+
+#    1| exit constant_compound_assign.rb (normal)
+#-----|  -> exit constant_compound_assign.rb
+
+#    2| foo_before
+#-----|  -> FOO_CONSTANT
+
+#    5| FOO_CONSTANT
+#-----|  -> FOO_CONSTANT
+
+#    5| FOO_CONSTANT
+#-----| true -> ... || ...
+#-----| false -> 123
+
+#    5| ... = ...
+#-----|  -> foo_after
+
+#    5| ... || ...
+#-----|  -> ... = ...
+
+#    5| 123
+#-----|  -> ... || ...
+
+#    7| foo_after
+#-----|  -> top_before
+
+#   11| top_before
+#-----|  -> TOP_CONSTANT
+
+#   14| TOP_CONSTANT
+#-----|  -> TOP_CONSTANT
+
+#   14| TOP_CONSTANT
+#-----| true -> ... || ...
+#-----| false -> 123
+
+#   14| ... = ...
+#-----|  -> top_after
+
+#   14| ... || ...
+#-----|  -> ... = ...
+
+#   14| 123
+#-----|  -> ... || ...
+
+#   16| top_after
+#-----|  -> TOP_CONSTANT2
+
+#   19| TOP_CONSTANT2
+#-----|  -> TOP_CONSTANT2
+
+#   19| TOP_CONSTANT2
+#-----| true -> ... || ...
+#-----| false -> 123
+
+#   19| ... = ...
+#-----|  -> top_after2
+
+#   19| ... || ...
+#-----|  -> ... = ...
+
+#   19| 123
+#-----|  -> ... || ...
+
+#   21| top_after2
+#-----|  -> exit constant_compound_assign.rb (normal)
 
 desugar.rb:
 #    1| enter m1
@@ -3911,6 +4032,9 @@ desugar.rb:
 #   14| call to foo
 #-----|  -> ... = ...
 
+#   14| __synth__1
+#-----|  -> call to count=
+
 #   14| call to count
 #-----|  -> 1
 
@@ -3931,9 +4055,6 @@ desugar.rb:
 
 #   14| __synth__1
 #-----|  -> __synth__0
-
-#   14| __synth__1
-#-----|  -> call to count=
 
 #   14| 1
 #-----|  -> ... + ...
@@ -3972,6 +4093,9 @@ desugar.rb:
 
 #   18| call to foo
 #-----|  -> ... = ...
+
+#   18| __synth__4
+#-----|  -> call to []=
 
 #   18| call to []
 #-----|  -> 1
@@ -4051,14 +4175,11 @@ desugar.rb:
 #   18| __synth__4
 #-----|  -> __synth__0
 
-#   18| __synth__4
-#-----|  -> call to []=
-
 #   18| 1
 #-----|  -> ... + ...
 
 #   21| enter m6
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #   21| exit m6
 
@@ -4074,14 +4195,14 @@ desugar.rb:
 #   22| 0
 #-----|  -> call to []
 
-#   22| __synth__0
+#   22| __synth__3
 #-----|  -> 0
 
 #   22| call to []
 #-----|  -> ... = ...
 
 #   22| x
-#-----|  -> __synth__0
+#-----|  -> __synth__3
 
 #   22| ...
 #-----|  -> exit m6 (normal)
@@ -4090,7 +4211,7 @@ desugar.rb:
 #-----|  -> _ .. _
 
 #   22| ... = ...
-#-----|  -> self
+#-----|  -> __synth__2
 
 #   22| 1
 #-----|  -> -2
@@ -4098,17 +4219,23 @@ desugar.rb:
 #   22| _ .. _
 #-----|  -> call to []
 
-#   22| __synth__0
+#   22| __synth__3
 #-----|  -> 1
 
 #   22| call to []
 #-----|  -> ... = ...
 
 #   22| y
-#-----|  -> __synth__0
+#-----|  -> __synth__3
+
+#   22| ... = ...
+#-----|  -> __synth__3
+
+#   22| __synth__2
+#-----|  -> self
 
 #   22| call to z
-#-----|  -> __synth__0__1
+#-----|  -> ... = ...
 
 #   22| self
 #-----|  -> call to z
@@ -4122,14 +4249,17 @@ desugar.rb:
 #   22| ... = ...
 #-----|  -> call to bar=
 
-#   22| __synth__0
-#-----|  -> -1
-
 #   22| __synth__0__1
 #-----|  -> ...
 
 #   22| __synth__0__1
-#-----|  -> __synth__0
+#-----|  -> __synth__3
+
+#   22| __synth__2
+#-----|  -> __synth__0__1
+
+#   22| __synth__3
+#-----|  -> -1
 
 #   22| call to []
 #-----|  -> ... = ...
@@ -4146,7 +4276,7 @@ desugar.rb:
 #   22| Array
 #-----|  -> 1
 
-#   22| __synth__0
+#   22| __synth__3
 #-----|  -> Array
 
 #   22| call to []
@@ -4165,7 +4295,7 @@ desugar.rb:
 #-----|  -> call to []
 
 #   25| enter m7
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #   25| exit m7
 
@@ -4176,19 +4306,19 @@ desugar.rb:
 #-----|  -> X
 
 #   26| ... = ...
-#-----|  -> __synth__0__1
+#-----|  -> __synth__2__1
 
 #   26| 0
 #-----|  -> call to []
 
-#   26| __synth__0
+#   26| __synth__2
 #-----|  -> 0
 
 #   26| call to []
 #-----|  -> ... = ...
 
 #   26| x
-#-----|  -> __synth__0
+#-----|  -> __synth__2
 
 #   26| ...
 #-----|  -> exit m7 (normal)
@@ -4205,11 +4335,11 @@ desugar.rb:
 #   26| 1
 #-----|  -> call to []
 
-#   26| __synth__0
+#   26| __synth__2
 #-----|  -> 1
 
-#   26| __synth__0__1
-#-----|  -> __synth__0
+#   26| __synth__2__1
+#-----|  -> __synth__2
 
 #   26| call to []
 #-----|  -> * ...
@@ -4220,14 +4350,14 @@ desugar.rb:
 #   26| 0
 #-----|  -> call to []
 
-#   26| __synth__0__1
+#   26| __synth__2__1
 #-----|  -> 0
 
 #   26| call to []
 #-----|  -> ... = ...
 
 #   26| y
-#-----|  -> __synth__0__1
+#-----|  -> __synth__2__1
 
 #   26| ... = ...
 #-----|  -> ...
@@ -4235,14 +4365,14 @@ desugar.rb:
 #   26| 1
 #-----|  -> call to []
 
-#   26| __synth__0__1
+#   26| __synth__2__1
 #-----|  -> 1
 
 #   26| call to []
 #-----|  -> ... = ...
 
 #   26| z
-#-----|  -> __synth__0__1
+#-----|  -> __synth__2__1
 
 #   26| * ...
 #-----|  -> ... = ...
@@ -4253,7 +4383,7 @@ desugar.rb:
 #   26| Array
 #-----|  -> 1
 
-#   26| __synth__0
+#   26| __synth__2
 #-----|  -> Array
 
 #   26| call to []
@@ -6460,7 +6590,7 @@ raise.rb:
 #-----|  -> m11
 
 #  121| p
-#-----| no-match -> self
+#-----| false, no-match, true -> self
 #-----| match -> self
 
 #  121| call to raise

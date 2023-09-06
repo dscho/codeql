@@ -69,6 +69,10 @@ class Element extends @element, Top {
       i = 10 and result = "Forwarder for Kotlin calls that need default arguments filling in"
       or
       i = 11 and result = "Forwarder for a Kotlin class inheriting an interface default method"
+      or
+      i = 12 and result = "Argument for enum constructor call"
+      or
+      i = 13 and result = "The class around a local function, a lambda, or a function reference"
     )
   }
 }

@@ -7,6 +7,12 @@ import codeql.swift.elements.type.Type
 
 module Generated {
   class ArchetypeType extends Synth::TArchetypeType, SubstitutableType {
+    /**
+     * Gets the interface type of this archetype type.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateInterfaceType() {
       result =
         Synth::convertTypeFromRaw(Synth::convertArchetypeTypeToRaw(this)
@@ -14,8 +20,22 @@ module Generated {
               .getInterfaceType())
     }
 
-    final Type getInterfaceType() { result = getImmediateInterfaceType().resolve() }
+    /**
+     * Gets the interface type of this archetype type.
+     */
+    final Type getInterfaceType() {
+      exists(Type immediate |
+        immediate = this.getImmediateInterfaceType() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
+    /**
+     * Gets the superclass of this archetype type, if it exists.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateSuperclass() {
       result =
         Synth::convertTypeFromRaw(Synth::convertArchetypeTypeToRaw(this)
@@ -23,21 +43,39 @@ module Generated {
               .getSuperclass())
     }
 
-    final Type getSuperclass() { result = getImmediateSuperclass().resolve() }
+    /**
+     * Gets the superclass of this archetype type, if it exists.
+     */
+    final Type getSuperclass() {
+      exists(Type immediate |
+        immediate = this.getImmediateSuperclass() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final predicate hasSuperclass() { exists(getSuperclass()) }
+    /**
+     * Holds if `getSuperclass()` exists.
+     */
+    final predicate hasSuperclass() { exists(this.getSuperclass()) }
 
-    ProtocolDecl getImmediateProtocol(int index) {
+    /**
+     * Gets the `index`th protocol of this archetype type (0-based).
+     */
+    ProtocolDecl getProtocol(int index) {
       result =
         Synth::convertProtocolDeclFromRaw(Synth::convertArchetypeTypeToRaw(this)
               .(Raw::ArchetypeType)
               .getProtocol(index))
     }
 
-    final ProtocolDecl getProtocol(int index) { result = getImmediateProtocol(index).resolve() }
+    /**
+     * Gets any of the protocols of this archetype type.
+     */
+    final ProtocolDecl getAProtocol() { result = this.getProtocol(_) }
 
-    final ProtocolDecl getAProtocol() { result = getProtocol(_) }
-
-    final int getNumberOfProtocols() { result = count(getAProtocol()) }
+    /**
+     * Gets the number of protocols of this archetype type.
+     */
+    final int getNumberOfProtocols() { result = count(int i | exists(this.getProtocol(i))) }
   }
 }

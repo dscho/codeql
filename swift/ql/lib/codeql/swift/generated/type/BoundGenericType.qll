@@ -6,6 +6,12 @@ import codeql.swift.elements.type.Type
 
 module Generated {
   class BoundGenericType extends Synth::TBoundGenericType, NominalOrBoundGenericNominalType {
+    /**
+     * Gets the `index`th argument type of this bound generic type (0-based).
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Type getImmediateArgType(int index) {
       result =
         Synth::convertTypeFromRaw(Synth::convertBoundGenericTypeToRaw(this)
@@ -13,10 +19,24 @@ module Generated {
               .getArgType(index))
     }
 
-    final Type getArgType(int index) { result = getImmediateArgType(index).resolve() }
+    /**
+     * Gets the `index`th argument type of this bound generic type (0-based).
+     */
+    final Type getArgType(int index) {
+      exists(Type immediate |
+        immediate = this.getImmediateArgType(index) and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final Type getAnArgType() { result = getArgType(_) }
+    /**
+     * Gets any of the argument types of this bound generic type.
+     */
+    final Type getAnArgType() { result = this.getArgType(_) }
 
-    final int getNumberOfArgTypes() { result = count(getAnArgType()) }
+    /**
+     * Gets the number of argument types of this bound generic type.
+     */
+    final int getNumberOfArgTypes() { result = count(int i | exists(this.getArgType(i))) }
   }
 }

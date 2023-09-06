@@ -7,18 +7,46 @@ module Generated {
   class AssignExpr extends Synth::TAssignExpr, Expr {
     override string getAPrimaryQlClass() { result = "AssignExpr" }
 
+    /**
+     * Gets the dest of this assign expression.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateDest() {
       result =
         Synth::convertExprFromRaw(Synth::convertAssignExprToRaw(this).(Raw::AssignExpr).getDest())
     }
 
-    final Expr getDest() { result = getImmediateDest().resolve() }
+    /**
+     * Gets the dest of this assign expression.
+     */
+    final Expr getDest() {
+      exists(Expr immediate |
+        immediate = this.getImmediateDest() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
+    /**
+     * Gets the source of this assign expression.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateSource() {
       result =
         Synth::convertExprFromRaw(Synth::convertAssignExprToRaw(this).(Raw::AssignExpr).getSource())
     }
 
-    final Expr getSource() { result = getImmediateSource().resolve() }
+    /**
+     * Gets the source of this assign expression.
+     */
+    final Expr getSource() {
+      exists(Expr immediate |
+        immediate = this.getImmediateSource() and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
   }
 }

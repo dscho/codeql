@@ -8,21 +8,31 @@ module Generated {
   class EnumElementDecl extends Synth::TEnumElementDecl, ValueDecl {
     override string getAPrimaryQlClass() { result = "EnumElementDecl" }
 
+    /**
+     * Gets the name of this enum element declaration.
+     */
     string getName() {
       result = Synth::convertEnumElementDeclToRaw(this).(Raw::EnumElementDecl).getName()
     }
 
-    ParamDecl getImmediateParam(int index) {
+    /**
+     * Gets the `index`th parameter of this enum element declaration (0-based).
+     */
+    ParamDecl getParam(int index) {
       result =
         Synth::convertParamDeclFromRaw(Synth::convertEnumElementDeclToRaw(this)
               .(Raw::EnumElementDecl)
               .getParam(index))
     }
 
-    final ParamDecl getParam(int index) { result = getImmediateParam(index).resolve() }
+    /**
+     * Gets any of the parameters of this enum element declaration.
+     */
+    final ParamDecl getAParam() { result = this.getParam(_) }
 
-    final ParamDecl getAParam() { result = getParam(_) }
-
-    final int getNumberOfParams() { result = count(getAParam()) }
+    /**
+     * Gets the number of parameters of this enum element declaration.
+     */
+    final int getNumberOfParams() { result = count(int i | exists(this.getParam(i))) }
   }
 }

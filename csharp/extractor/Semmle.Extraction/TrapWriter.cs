@@ -1,9 +1,9 @@
-using Semmle.Util;
-using Semmle.Util.Logging;
 using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using Semmle.Util;
+using Semmle.Util.Logging;
 
 namespace Semmle.Extraction
 {
@@ -223,7 +223,7 @@ namespace Semmle.Extraction
             {
                 FileUtils.MoveOrReplace(tmpSrcFile, dest);
             }
-            catch (IOException ex)
+            catch (Exception ex)
             {
                 // If this happened, it was probably because the same file was compiled multiple times.
                 // In any case, this is not a fatal error.

@@ -12,21 +12,7 @@ abstract class XsltInjectionSink extends DataFlow::Node { }
 
 /** A default sink representing methods susceptible to XSLT Injection attacks. */
 private class DefaultXsltInjectionSink extends XsltInjectionSink {
-  DefaultXsltInjectionSink() { sinkNode(this, "xslt") }
-}
-
-private class DefaultXsltInjectionSinkModel extends SinkModelCsv {
-  override predicate row(string row) {
-    row =
-      [
-        "javax.xml.transform;Transformer;false;transform;;;Argument[-1];xslt;manual",
-        "net.sf.saxon.s9api;XsltTransformer;false;transform;;;Argument[-1];xslt;manual",
-        "net.sf.saxon.s9api;Xslt30Transformer;false;transform;;;Argument[-1];xslt;manual",
-        "net.sf.saxon.s9api;Xslt30Transformer;false;applyTemplates;;;Argument[-1];xslt;manual",
-        "net.sf.saxon.s9api;Xslt30Transformer;false;callFunction;;;Argument[-1];xslt;manual",
-        "net.sf.saxon.s9api;Xslt30Transformer;false;callTemplate;;;Argument[-1];xslt;manual"
-      ]
-  }
+  DefaultXsltInjectionSink() { sinkNode(this, "xslt-injection") }
 }
 
 /**

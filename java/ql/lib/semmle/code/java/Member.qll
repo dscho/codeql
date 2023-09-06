@@ -33,6 +33,7 @@ class Member extends Element, Annotatable, Modifiable, @member {
    * Holds if this member has the specified name and is declared in the
    * specified package and type.
    */
+  pragma[nomagic]
   predicate hasQualifiedName(string package, string type, string name) {
     this.getDeclaringType().hasQualifiedName(package, type) and this.hasName(name)
   }
@@ -283,6 +284,9 @@ class Callable extends StmtParent, Member, @callable {
   /** Holds if the last parameter of this callable is a varargs (variable arity) parameter. */
   predicate isVarargs() { this.getAParameter().isVarargs() }
 
+  /** Gets the index of this callable's varargs parameter, if any exists. */
+  int getVaragsParameterIndex() { this.getParameter(result).isVarargs() }
+
   /**
    * Gets the signature of this callable, where all types in the signature have a fully-qualified name.
    * The parameter types are only separated by a comma (without space). If this callable has
@@ -306,7 +310,9 @@ class Callable extends StmtParent, Member, @callable {
    */
   Callable getKotlinParameterDefaultsProxy() {
     this.getDeclaringType() = result.getDeclaringType() and
-    exists(int proxyNParams, int extraLeadingParams, RefType lastParamType |
+    exists(
+      int proxyNParams, int extraLeadingParams, int regularParamsStartIdx, RefType lastParamType
+    |
       proxyNParams = result.getNumberOfParameters() and
       extraLeadingParams = (proxyNParams - this.getNumberOfParameters()) - 2 and
       extraLeadingParams >= 0 and
@@ -316,19 +322,75 @@ class Callable extends StmtParent, Member, @callable {
         this instanceof Constructor and
         result instanceof Constructor and
         extraLeadingParams = 0 and
+        regularParamsStartIdx = 0 and
         lastParamType.hasQualifiedName("kotlin.jvm.internal", "DefaultConstructorMarker")
         or
         this instanceof Method and
         result instanceof Method and
         this.getName() + "$default" = result.getName() and
-        extraLeadingParams <= 2 and
+        extraLeadingParams <= 1 and // 0 for static methods, 1 for instance methods
+        regularParamsStartIdx = extraLeadingParams and
         lastParamType instanceof TypeObject
       )
     |
-      forall(int paramIdx | paramIdx in [extraLeadingParams .. proxyNParams - 3] |
+      forall(int paramIdx | paramIdx in [regularParamsStartIdx .. proxyNParams - 3] |
         this.getParameterType(paramIdx - extraLeadingParams).getErasure() =
           eraseRaw(result.getParameterType(paramIdx))
       )
+    )
+  }
+}
+
+/**
+ * Holds if the given type is public and, if it is a nested type, that all of
+ * its enclosing types are public as well.
+ */
+private predicate veryPublic(RefType t) {
+  t.isPublic() and
+  (
+    not t instanceof NestedType or
+    veryPublic(t.(NestedType).getEnclosingType())
+  )
+}
+
+/** A callable that is the same as its source declaration. */
+class SrcCallable extends Callable {
+  SrcCallable() { this.isSourceDeclaration() }
+
+  /**
+   * Holds if this callable is effectively public in the sense that it can be
+   * called from outside the codebase. This means either a `public` callable on
+   * a sufficiently public type or a `protected` callable on a sufficiently
+   * public non-`final` type.
+   */
+  predicate isEffectivelyPublic() {
+    exists(RefType t | t = this.getDeclaringType() |
+      this.isPublic() and veryPublic(t)
+      or
+      this.isProtected() and not t.isFinal() and veryPublic(t)
+    )
+    or
+    exists(SrcRefType tsub, Method m |
+      veryPublic(tsub) and
+      tsub.hasMethod(m, _) and
+      m.getSourceDeclaration() = this
+    |
+      this.isPublic()
+      or
+      this.isProtected() and not tsub.isFinal()
+    )
+  }
+
+  /**
+   * Holds if this callable is implicitly public in the sense that it can be the
+   * target of virtual dispatch by a call from outside the codebase.
+   */
+  predicate isImplicitlyPublic() {
+    this.isEffectivelyPublic()
+    or
+    exists(SrcMethod m |
+      m.(SrcCallable).isEffectivelyPublic() and
+      m.getAPossibleImplementationOfSrcMethod() = this
     )
   }
 }
@@ -390,14 +452,21 @@ private predicate potentialInterfaceImplementationWithSignature(string sig, RefT
   not t.isAbstract()
 }
 
-pragma[nomagic]
-private predicate implementsInterfaceMethod(SrcMethod impl, SrcMethod m) {
-  exists(RefType t, Interface i, Method minst, Method implinst |
-    m = minst.getSourceDeclaration() and
+pragma[noinline]
+private predicate isInterfaceSourceImplementation(Method minst, RefType t) {
+  exists(Interface i |
     i = minst.getDeclaringType() and
     t.extendsOrImplements+(i) and
-    t.isSourceDeclaration() and
+    t.isSourceDeclaration()
+  )
+}
+
+pragma[nomagic]
+private predicate implementsInterfaceMethod(SrcMethod impl, SrcMethod m) {
+  exists(RefType t, Method minst, Method implinst |
+    isInterfaceSourceImplementation(minst, t) and
     potentialInterfaceImplementationWithSignature(minst.getSignature(), t, implinst) and
+    m = minst.getSourceDeclaration() and
     impl = implinst.getSourceDeclaration()
   )
 }
@@ -526,7 +595,7 @@ class Method extends Callable, @method {
   string getKotlinName() {
     ktFunctionOriginalNames(this, result)
     or
-    not exists(string n | ktFunctionOriginalNames(this, n)) and
+    not ktFunctionOriginalNames(this, _) and
     result = this.getName()
   }
 
@@ -535,7 +604,7 @@ class Method extends Callable, @method {
 
 /** A method that is the same as its source declaration. */
 class SrcMethod extends Method {
-  SrcMethod() { methods(_, _, _, _, _, this) }
+  SrcMethod() { methods(this, _, _, _, _, this) }
 
   /**
    * All the methods that could possibly be called when this method
@@ -620,6 +689,9 @@ class FinalizeMethod extends Method {
 class Constructor extends Callable, @constructor {
   /** Holds if this is a default constructor, not explicitly declared in source code. */
   predicate isDefaultConstructor() { isDefConstr(this) }
+
+  /** Holds if this is a constructor without parameters. */
+  predicate isParameterless() { this.getNumberOfParameters() = 0 }
 
   override Constructor getSourceDeclaration() { constrs(this, _, _, _, _, result) }
 
@@ -806,4 +878,19 @@ class ExtensionMethod extends Method {
   KotlinType getExtendedKotlinType() { result = extendedKotlinType }
 
   override string getAPrimaryQlClass() { result = "ExtensionMethod" }
+
+  /**
+   * Gets the index of the parameter that is the extension receiver. This is typically index 0. In case of `$default`
+   * extension methods that are defined as members, the index is 1. Index 0 is the dispatch receiver of the `$default`
+   * method.
+   */
+  int getExtensionReceiverParameterIndex() {
+    if
+      exists(Method src |
+        this = src.getKotlinParameterDefaultsProxy() and
+        src.getNumberOfParameters() = this.getNumberOfParameters() - 3 // 2 extra parameters + 1 dispatch receiver
+      )
+    then result = 1
+    else result = 0
+  }
 }

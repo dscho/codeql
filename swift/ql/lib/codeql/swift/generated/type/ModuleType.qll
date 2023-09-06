@@ -8,13 +8,14 @@ module Generated {
   class ModuleType extends Synth::TModuleType, Type {
     override string getAPrimaryQlClass() { result = "ModuleType" }
 
-    ModuleDecl getImmediateModule() {
+    /**
+     * Gets the module of this module type.
+     */
+    ModuleDecl getModule() {
       result =
         Synth::convertModuleDeclFromRaw(Synth::convertModuleTypeToRaw(this)
               .(Raw::ModuleType)
               .getModule())
     }
-
-    final ModuleDecl getModule() { result = getImmediateModule().resolve() }
   }
 }

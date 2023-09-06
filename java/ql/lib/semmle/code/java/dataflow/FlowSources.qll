@@ -36,6 +36,14 @@ abstract class RemoteFlowSource extends DataFlow::Node {
   abstract string getSourceType();
 }
 
+/**
+ * A module for importing frameworks that define flow sources.
+ */
+private module FlowSources {
+  private import semmle.code.java.frameworks.hudson.Hudson
+  private import semmle.code.java.frameworks.stapler.Stapler
+}
+
 private class ExternalRemoteFlowSource extends RemoteFlowSource {
   ExternalRemoteFlowSource() { sourceNode(this, "remote") }
 
@@ -135,11 +143,10 @@ private class GuiceRequestParameterSource extends RemoteFlowSource {
   override string getSourceType() { result = "Guice request parameter" }
 }
 
-private class Struts2ActionSupportClassFieldReadSource extends RemoteFlowSource {
-  Struts2ActionSupportClassFieldReadSource() {
-    exists(Struts2ActionSupportClass c |
-      c.getASetterMethod().getField() = this.asExpr().(FieldRead).getField()
-    )
+private class Struts2ActionSupportClassFieldSource extends RemoteFlowSource {
+  Struts2ActionSupportClassFieldSource() {
+    this.(DataFlow::FieldValueNode).getField() =
+      any(Struts2ActionSupportClass c).getASetterMethod().getField()
   }
 
   override string getSourceType() { result = "Struts2 ActionSupport field" }
@@ -165,9 +172,7 @@ abstract class UserInput extends DataFlow::Node { }
 /**
  * Input that may be controlled by a remote user.
  */
-private class RemoteUserInput extends UserInput {
-  RemoteUserInput() { this instanceof RemoteFlowSource }
-}
+private class RemoteUserInput extends UserInput instanceof RemoteFlowSource { }
 
 /** A node with input that may be controlled by a local user. */
 abstract class LocalUserInput extends UserInput { }
@@ -292,4 +297,17 @@ class OnActivityResultIntentSource extends OnActivityResultIncomingIntent, Remot
   OnActivityResultIntentSource() { this.isRemoteSource() }
 
   override string getSourceType() { result = "Android onActivityResult incoming Intent" }
+}
+
+/**
+ * A parameter of a method annotated with the `android.webkit.JavascriptInterface` annotation.
+ */
+class AndroidJavascriptInterfaceMethodParameter extends RemoteFlowSource {
+  AndroidJavascriptInterfaceMethodParameter() {
+    exists(JavascriptInterfaceMethod m | this.asParameter() = m.getAParameter())
+  }
+
+  override string getSourceType() {
+    result = "Parameter of method with JavascriptInterface annotation"
+  }
 }

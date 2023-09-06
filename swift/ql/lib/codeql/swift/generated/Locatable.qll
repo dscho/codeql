@@ -6,15 +6,19 @@ import codeql.swift.elements.Location
 
 module Generated {
   class Locatable extends Synth::TLocatable, Element {
-    Location getImmediateLocation() {
+    /**
+     * Gets the location associated with this element in the code, if it exists.
+     */
+    Location getLocation() {
       result =
         Synth::convertLocationFromRaw(Synth::convertLocatableToRaw(this)
               .(Raw::Locatable)
               .getLocation())
     }
 
-    final Location getLocation() { result = getImmediateLocation().resolve() }
-
-    final predicate hasLocation() { exists(getLocation()) }
+    /**
+     * Holds if `getLocation()` exists.
+     */
+    final predicate hasLocation() { exists(this.getLocation()) }
   }
 }

@@ -8,17 +8,24 @@ module Generated {
   class StmtCondition extends Synth::TStmtCondition, AstNode {
     override string getAPrimaryQlClass() { result = "StmtCondition" }
 
-    ConditionElement getImmediateElement(int index) {
+    /**
+     * Gets the `index`th element of this statement condition (0-based).
+     */
+    ConditionElement getElement(int index) {
       result =
         Synth::convertConditionElementFromRaw(Synth::convertStmtConditionToRaw(this)
               .(Raw::StmtCondition)
               .getElement(index))
     }
 
-    final ConditionElement getElement(int index) { result = getImmediateElement(index).resolve() }
+    /**
+     * Gets any of the elements of this statement condition.
+     */
+    final ConditionElement getAnElement() { result = this.getElement(_) }
 
-    final ConditionElement getAnElement() { result = getElement(_) }
-
-    final int getNumberOfElements() { result = count(getAnElement()) }
+    /**
+     * Gets the number of elements of this statement condition.
+     */
+    final int getNumberOfElements() { result = count(int i | exists(this.getElement(i))) }
   }
 }

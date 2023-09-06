@@ -7,21 +7,31 @@ module Generated {
   class ContinueStmt extends Synth::TContinueStmt, Stmt {
     override string getAPrimaryQlClass() { result = "ContinueStmt" }
 
+    /**
+     * Gets the target name of this continue statement, if it exists.
+     */
     string getTargetName() {
       result = Synth::convertContinueStmtToRaw(this).(Raw::ContinueStmt).getTargetName()
     }
 
-    final predicate hasTargetName() { exists(getTargetName()) }
+    /**
+     * Holds if `getTargetName()` exists.
+     */
+    final predicate hasTargetName() { exists(this.getTargetName()) }
 
-    Stmt getImmediateTarget() {
+    /**
+     * Gets the target of this continue statement, if it exists.
+     */
+    Stmt getTarget() {
       result =
         Synth::convertStmtFromRaw(Synth::convertContinueStmtToRaw(this)
               .(Raw::ContinueStmt)
               .getTarget())
     }
 
-    final Stmt getTarget() { result = getImmediateTarget().resolve() }
-
-    final predicate hasTarget() { exists(getTarget()) }
+    /**
+     * Holds if `getTarget()` exists.
+     */
+    final predicate hasTarget() { exists(this.getTarget()) }
   }
 }

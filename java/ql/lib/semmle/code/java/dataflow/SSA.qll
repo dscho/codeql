@@ -148,7 +148,7 @@ class SsaSourceField extends SsaSourceVariable {
       if f.isStatic() then result = f.getDeclaringType().getQualifiedName() else result = "this"
     )
     or
-    exists(Field f, RefType t | this = TEnclosingField(_, f, t) | result = t.toString() + ".this")
+    exists(RefType t | this = TEnclosingField(_, _, t) | result = t.toString() + ".this")
     or
     exists(SsaSourceVariable q | this = TQualifiedField(_, q, _) | result = q.toString())
   }
@@ -383,7 +383,7 @@ private module SsaImpl {
   private predicate intraInstanceCallEdge(Callable c1, Method m2) {
     exists(MethodAccess ma, RefType t1 |
       ma.getCaller() = c1 and
-      m2 = viableImpl(ma) and
+      m2 = viableImpl_v2(ma) and
       not m2.isStatic() and
       (
         not exists(ma.getQualifier()) or
@@ -401,7 +401,7 @@ private module SsaImpl {
   }
 
   private Callable tgt(Call c) {
-    result = viableImpl(c)
+    result = viableImpl_v2(c)
     or
     result = getRunnerTarget(c)
     or
@@ -927,9 +927,6 @@ class SsaVariable extends TSsaVariable {
     this = TSsaEntryDef(_, result) or
     this = TSsaUntracked(_, result)
   }
-
-  /** DEPRECATED: Alias for getCfgNode */
-  deprecated ControlFlowNode getCFGNode() { result = this.getCfgNode() }
 
   /** Gets a textual representation of this SSA variable. */
   string toString() { none() }

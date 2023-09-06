@@ -7,6 +7,12 @@ module Generated {
   class TuplePattern extends Synth::TTuplePattern, Pattern {
     override string getAPrimaryQlClass() { result = "TuplePattern" }
 
+    /**
+     * Gets the `index`th element of this tuple pattern (0-based).
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Pattern getImmediateElement(int index) {
       result =
         Synth::convertPatternFromRaw(Synth::convertTuplePatternToRaw(this)
@@ -14,10 +20,24 @@ module Generated {
               .getElement(index))
     }
 
-    final Pattern getElement(int index) { result = getImmediateElement(index).resolve() }
+    /**
+     * Gets the `index`th element of this tuple pattern (0-based).
+     */
+    final Pattern getElement(int index) {
+      exists(Pattern immediate |
+        immediate = this.getImmediateElement(index) and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final Pattern getAnElement() { result = getElement(_) }
+    /**
+     * Gets any of the elements of this tuple pattern.
+     */
+    final Pattern getAnElement() { result = this.getElement(_) }
 
-    final int getNumberOfElements() { result = count(getAnElement()) }
+    /**
+     * Gets the number of elements of this tuple pattern.
+     */
+    final int getNumberOfElements() { result = count(int i | exists(this.getElement(i))) }
   }
 }

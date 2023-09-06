@@ -1,3 +1,108 @@
+## 0.7.3
+
+No user-facing changes.
+
+## 0.7.2
+
+No user-facing changes.
+
+## 0.7.1
+
+### Minor Analysis Improvements
+
+* The `cpp/uninitialized-local` query now excludes uninitialized uses that are explicitly cast to void and are expression statements. As a result, the query will report less false positives.
+
+## 0.7.0
+
+### Minor Analysis Improvements
+
+* The `cpp/comparison-with-wider-type` query now correctly handles relational operations on signed operators. As a result the query may find more results.
+
+## 0.6.4
+
+No user-facing changes.
+
+## 0.6.3
+
+### New Queries
+
+* Added a new query, `cpp/overrun-write`, to detect buffer overflows in C-style functions that manipulate buffers.
+
+## 0.6.2
+
+No user-facing changes.
+
+## 0.6.1
+
+### New Queries
+
+* A new query `cpp/double-free` has been added. The query finds possible cases of deallocating the same pointer twice. The precision of the query has been set to "medium".
+* The query `cpp/use-after-free` has been modernized and assigned the precision "medium". The query finds cases of where a pointer is dereferenced after its memory has been deallocated.
+
+## 0.6.0
+
+### New Queries
+
+* The query `cpp/redundant-null-check-simple` has been promoted to Code Scanning. The query finds cases where a pointer is compared to null after it has already been dereferenced. Such comparisons likely indicate a bug at the place where the pointer is dereferenced, or where the pointer is compared to null.
+
+### Minor Analysis Improvements
+
+* The query `cpp/tainted-arithmetic` now also flags possible overflows in arithmetic assignment operations.
+
+## 0.5.6
+
+No user-facing changes.
+
+## 0.5.5
+
+### Deprecated Queries
+
+* The `NetworkToBufferSizeConfiguration` and `UntrustedDataToExternalApiConfig` dataflow configurations have been deprecated. Please use `NetworkToBufferSizeFlow` and `UntrustedDataToExternalApiFlow`.
+* The `LeapYearCheckConfiguration`, `FiletimeYearArithmeticOperationCheckConfiguration`, and `PossibleYearArithmeticOperationCheckConfiguration` dataflow configurations have been deprecated. Please use `LeapYearCheckFlow`, `FiletimeYearArithmeticOperationCheckFlow` and `PossibleYearArithmeticOperationCheckFlow`.
+
+## 0.5.4
+
+No user-facing changes.
+
+## 0.5.3
+
+No user-facing changes.
+
+## 0.5.2
+
+No user-facing changes.
+
+## 0.5.1
+
+### Minor Analysis Improvements
+
+* The `cpp/no-space-for-terminator` and `cpp/uncontrolled-allocation-size` queries have been enhanced with heuristic detection of allocations. These queries now find more results.
+
+## 0.5.0
+
+### Minor Analysis Improvements
+
+* The `AlertSuppression.ql` query has been updated to support the new `// codeql[query-id]` supression comments. These comments can be used to suppress an alert and must be placed on a blank line before the alert. In addition the legacy `// lgtm` and `// lgtm[query-id]` comments can now also be placed on the line before an alert.
+* The `cpp/missing-check-scanf` query no longer reports the free'ing of `scanf` output variables as potential reads.
+
+## 0.4.6
+
+No user-facing changes.
+
+## 0.4.5
+
+No user-facing changes.
+
+## 0.4.4
+
+No user-facing changes.
+
+## 0.4.3
+
+### Minor Analysis Improvements
+
+* Fixed a bug in `cpp/jsf/av-rule-76` that caused the query to miss results when an implicitly-defined copy constructor or copy assignment operator was generated.
+
 ## 0.4.2
 
 ### New Queries

@@ -8,11 +8,12 @@ module Generated {
   class DeferStmt extends Synth::TDeferStmt, Stmt {
     override string getAPrimaryQlClass() { result = "DeferStmt" }
 
-    BraceStmt getImmediateBody() {
+    /**
+     * Gets the body of this defer statement.
+     */
+    BraceStmt getBody() {
       result =
         Synth::convertBraceStmtFromRaw(Synth::convertDeferStmtToRaw(this).(Raw::DeferStmt).getBody())
     }
-
-    final BraceStmt getBody() { result = getImmediateBody().resolve() }
   }
 }

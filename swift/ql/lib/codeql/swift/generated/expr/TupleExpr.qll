@@ -7,6 +7,12 @@ module Generated {
   class TupleExpr extends Synth::TTupleExpr, Expr {
     override string getAPrimaryQlClass() { result = "TupleExpr" }
 
+    /**
+     * Gets the `index`th element of this tuple expression (0-based).
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateElement(int index) {
       result =
         Synth::convertExprFromRaw(Synth::convertTupleExprToRaw(this)
@@ -14,10 +20,24 @@ module Generated {
               .getElement(index))
     }
 
-    final Expr getElement(int index) { result = getImmediateElement(index).resolve() }
+    /**
+     * Gets the `index`th element of this tuple expression (0-based).
+     */
+    final Expr getElement(int index) {
+      exists(Expr immediate |
+        immediate = this.getImmediateElement(index) and
+        if exists(this.getResolveStep()) then result = immediate else result = immediate.resolve()
+      )
+    }
 
-    final Expr getAnElement() { result = getElement(_) }
+    /**
+     * Gets any of the elements of this tuple expression.
+     */
+    final Expr getAnElement() { result = this.getElement(_) }
 
-    final int getNumberOfElements() { result = count(getAnElement()) }
+    /**
+     * Gets the number of elements of this tuple expression.
+     */
+    final int getNumberOfElements() { result = count(int i | exists(this.getElement(i))) }
   }
 }

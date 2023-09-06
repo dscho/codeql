@@ -8,13 +8,30 @@ module Generated {
   class ReturnStmt extends Synth::TReturnStmt, Stmt {
     override string getAPrimaryQlClass() { result = "ReturnStmt" }
 
+    /**
+     * Gets the result of this return statement, if it exists.
+     *
+     * This includes nodes from the "hidden" AST. It can be overridden in subclasses to change the
+     * behavior of both the `Immediate` and non-`Immediate` versions.
+     */
     Expr getImmediateResult() {
       result =
         Synth::convertExprFromRaw(Synth::convertReturnStmtToRaw(this).(Raw::ReturnStmt).getResult())
     }
 
-    final Expr getResult() { result = getImmediateResult().resolve() }
+    /**
+     * Gets the result of this return statement, if it exists.
+     */
+    final Expr getResult() {
+      exists(Expr immediate |
+        immediate = this.getImmediateResult() and
+        result = immediate.resolve()
+      )
+    }
 
-    final predicate hasResult() { exists(getResult()) }
+    /**
+     * Holds if `getResult()` exists.
+     */
+    final predicate hasResult() { exists(this.getResult()) }
   }
 }

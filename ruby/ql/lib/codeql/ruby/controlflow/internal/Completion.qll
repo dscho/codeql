@@ -8,7 +8,7 @@ private import codeql.ruby.AST
 private import codeql.ruby.ast.internal.AST
 private import codeql.ruby.ast.internal.Control
 private import codeql.ruby.controlflow.ControlFlowGraph
-private import ControlFlowGraphImpl
+private import ControlFlowGraphImpl as CfgImpl
 private import NonReturning
 private import SuccessorTypes
 
@@ -53,7 +53,7 @@ private predicate nestedEnsureCompletion(TCompletion outer, int nestLevel) {
     or
     outer = TExitCompletion()
   ) and
-  nestLevel = any(Trees::BodyStmtTree t).getNestLevel()
+  nestLevel = any(CfgImpl::Trees::BodyStmtTree t).getNestLevel()
 }
 
 pragma[noinline]
@@ -72,7 +72,7 @@ private predicate completionIsValidForStmt(AstNode n, Completion c) {
 }
 
 private AstNode getARescuableBodyChild() {
-  exists(Trees::BodyStmtTree bst | result = bst.getBodyChild(_, true) |
+  exists(CfgImpl::Trees::BodyStmtTree bst | result = bst.getBodyChild(_, true) |
     exists(bst.getARescue())
     or
     exists(bst.getEnsure())
@@ -211,8 +211,11 @@ private predicate inBooleanContext(AstNode n) {
   or
   exists(CaseExpr c, WhenClause w |
     not exists(c.getValue()) and
-    c.getABranch() = w and
+    c.getABranch() = w
+  |
     w.getPattern(_) = n
+    or
+    w = n
   )
 }
 
@@ -233,15 +236,18 @@ private predicate inMatchingContext(AstNode n) {
   or
   exists(CaseExpr c, WhenClause w |
     exists(c.getValue()) and
-    c.getABranch() = w and
+    c.getABranch() = w
+  |
     w.getPattern(_) = n
+    or
+    w = n
   )
   or
   n instanceof CasePattern
   or
   n = any(ReferencePattern p).getExpr()
   or
-  n.(Trees::DefaultValueParameterTree).hasDefaultValue()
+  n.(CfgImpl::Trees::DefaultValueParameterTree).hasDefaultValue()
 }
 
 /**
@@ -278,7 +284,8 @@ abstract class ConditionalCompletion extends NormalCompletion {
  * A completion that represents evaluation of an expression
  * with a Boolean value.
  */
-class BooleanCompletion extends ConditionalCompletion, NonNestedNormalCompletion, TBooleanCompletion {
+class BooleanCompletion extends ConditionalCompletion, NonNestedNormalCompletion, TBooleanCompletion
+{
   BooleanCompletion() { this = TBooleanCompletion(value) }
 
   /** Gets the dual Boolean completion. */
